@@ -38,21 +38,31 @@ Daydreamer is a multi-agent AI system designed to simulate continuous thinking a
 ## Component Specifications
 
 ### 1. Driver & Scheduler
-**Purpose**: Central coordination and timing management
+**Purpose**: Central coordination and timing management with three distinct cognitive modes
 **Responsibilities**:
-- Orchestrate agent interactions
-- Manage system modes (active thinking, external input processing, synthesis)
+- Orchestrate agent interactions across three modes
+- Manage mode transitions based on exhaustion signals and consensus
 - Handle priority queuing for thoughts and tasks
 - Coordinate timing for brain breaks and synthesis cycles
+- Monitor working-memory load and exhaustion signals
+- Send appropriate context based on current mode
 
-**Technology**: Python with asyncio for concurrent operations
+**Technology**: Python with asyncio for concurrent operations, external scheduler (cron/Python loop)
 **Data Schema**:
 ```python
 class SystemMode(Enum):
-    CONTINUOUS_THINKING = "continuous_thinking"
-    EXTERNAL_PROCESSING = "external_processing"
-    SYNTHESIS = "synthesis"
-    BRAIN_BREAK = "brain_break"
+    ACTIVE = "active"  # Full reasoning, chain-of-thought ON, memory read/write
+    PARTIAL_WAKE = "partial_wake"  # Brain break mode, creative associations
+    DEFAULT = "default"  # Sleep mode, memory consolidation only
+
+class DriverContext:
+    mode: SystemMode
+    chunks: List[str]
+    hypothesis: str
+    critic_review: str
+    grant_proposal: str
+    working_memory_load: float
+    exhaustion_signals: List[str]
 
 class Thought:
     id: str
@@ -86,12 +96,14 @@ class NotepadEntry:
 ```
 
 ### 3. Intrusion Log
-**Purpose**: Capture and process external interruptions
+**Purpose**: Capture and process external interruptions with parameterized intrusive thoughts
 **Responsibilities**:
 - Log external inputs (user queries, system events)
-- Prioritize intrusions based on urgency
+- Track intrusive thoughts with intensity and difficulty parameters
+- Prioritize intrusions based on urgency and suppression effort
 - Maintain context for external interactions
 - Route intrusions to appropriate agents
+- Handle thought suppression when required
 
 **Technology**: Structured logging with JSON format
 **Data Schema**:
@@ -101,19 +113,24 @@ class Intrusion:
     source: str
     content: str
     urgency: int  # 1-10 scale
+    intensity: int  # 1-10 scale for intrusive thoughts
+    difficulty: int  # Suppression effort required
     timestamp: datetime
     context: Dict
     processed: bool
     response: Optional[str]
+    suppressed: bool
 ```
 
-### 4. Brain Break Manager
-**Purpose**: Simulate natural cognitive rest periods
+### 4. Brain Break Manager (PARTIAL_WAKE Mode)
+**Purpose**: Simulate natural cognitive rest periods with creative free-association
 **Responsibilities**:
 - Schedule periodic breaks in intensive thinking
-- Switch to low-energy cognitive modes
-- Trigger memory consolidation processes
-- Prevent cognitive overload
+- Trigger PARTIAL_WAKE mode after X active cycles or exhaustion signals
+- Generate enjoyable, abstract associations to clear thought stagnation
+- Create shallow, rapid ideas for mood/environment shifting
+- Indirectly modify memory state via new associative links
+- Support virtual walks, internet browsing, random image prompts
 
 **Technology**: Timer-based scheduling with configurable intervals
 **Data Schema**:
@@ -122,17 +139,21 @@ class BrainBreak:
     id: str
     start_time: datetime
     duration: timedelta
-    break_type: str  # "light_thinking", "memory_consolidation", "rest"
+    break_type: str  # "creative_association", "virtual_walk", "internet_browse"
     activities: List[str]
+    generated_associations: List[str]
+    mood_shift_achieved: bool
 ```
 
 ### 5. Synthesizer
-**Purpose**: Integrate and connect thoughts across time
+**Purpose**: Creative hypothesis and analogy generation with chain-of-thought always enabled
 **Responsibilities**:
 - Identify patterns in thought sequences
-- Create higher-order abstractions
+- Create higher-order abstractions and creative hypotheses
 - Generate new insights from existing thoughts
-- Update long-term memory with synthesized knowledge
+- Chain-of-thought always ON during ACTIVE and PARTIAL_WAKE modes
+- Consults intrusive thoughts and may trigger suppression actions
+- Generate analogies and creative connections
 
 **Technology**: Pre-trained transformer model (GPT-2/3 or similar) for text generation
 **Data Schema**:
@@ -142,17 +163,21 @@ class Synthesis:
     input_thoughts: List[str]
     output_insight: str
     confidence: float
-    synthesis_type: str  # "pattern", "abstraction", "connection"
+    synthesis_type: str  # "pattern", "abstraction", "connection", "analogy", "hypothesis"
     timestamp: datetime
+    chain_of_thought: str
+    intrusive_thoughts_consulted: List[str]
 ```
 
 ### 6. Critic & Router
-**Purpose**: Evaluate and direct thoughts to appropriate destinations
+**Purpose**: Evaluate novelty, coherence, usefulness and assign memory routing flags
 **Responsibilities**:
-- Assess thought quality and relevance
+- Assess thought quality, relevance, novelty, and coherence
 - Route thoughts to appropriate agents
 - Filter out low-quality or redundant content
 - Maintain thought flow direction
+- Handle thought suppression when required
+- Assign memory routing flags for long-term storage
 
 **Technology**: Lightweight classification model (BERT-based)
 **Data Schema**:
@@ -162,17 +187,22 @@ class ThoughtEvaluation:
     quality_score: float
     relevance_score: float
     novelty_score: float
+    coherence_score: float
     routing_decision: str
+    memory_routing_flags: List[str]
     confidence: float
+    suppression_required: bool
 ```
 
 ### 7. Memory Curator
-**Purpose**: Long-term memory management and retrieval
+**Purpose**: Select chunks from working and long-term memory for next cycle (retrieval only)
 **Responsibilities**:
-- Store and index thoughts for long-term retention
+- Select chunks from working and long-term memory for next cycle
 - Implement semantic search for memory retrieval
 - Manage memory consolidation and pruning
 - Provide context for new thoughts
+- NO writing to long-term memory (retrieval only)
+- Support memory consolidation during DEFAULT mode
 
 **Technology**: Vector database (Pinecone, Weaviate, or FAISS) with embeddings
 **Data Schema**:
@@ -187,17 +217,21 @@ class MemoryEntry:
     importance_score: float
     tags: List[str]
     related_memories: List[str]
+    memory_type: str  # "working", "long_term"
+    consolidation_status: str  # "pending", "consolidated", "pruned"
 ```
 
 ### 8. Browser Module
-**Purpose**: External information retrieval and integration
+**Purpose**: Abstract WEB_SEARCH functions with sandboxed internet access
 **Responsibilities**:
+- Abstract WEB_SEARCH(query) functions
 - Search for relevant external information
 - Validate and integrate external data
 - Maintain source credibility tracking
-- Update knowledge base with new information
+- Sandbox browsing with rate limits
+- Used in ACTIVE and PARTIAL_WAKE modes
 
-**Technology**: Web scraping with BeautifulSoup/Selenium, API integrations
+**Technology**: Web scraping with BeautifulSoup/Selenium, API integrations, sandboxed environment
 **Data Schema**:
 ```python
 class ExternalSource:
@@ -207,39 +241,55 @@ class ExternalSource:
     last_updated: datetime
     relevance_tags: List[str]
     integration_status: str
+    search_query: str
+    rate_limit_status: str
 ```
 
 ## Data Flow Architecture
 
-### Continuous Thinking Flow
+### ACTIVE Mode Flow
 ```
-1. Driver initiates continuous thinking mode
-2. Memory Curator retrieves relevant context
-3. Synthesizer generates new thoughts
-4. Critic evaluates and routes thoughts
-5. Notepad stores active thoughts
-6. Brain Break Manager schedules breaks
-7. Loop continues with new context
-```
-
-### External Input Processing Flow
-```
-1. Intrusion Log captures external input
-2. Critic evaluates urgency and relevance
-3. Browser Module retrieves additional context
-4. Synthesizer integrates with existing thoughts
-5. Memory Curator updates long-term storage
-6. Response generated and returned
+1. Driver initiates ACTIVE mode with full context
+2. Memory Curator retrieves relevant chunks from working/long-term memory
+3. Synthesizer generates new thoughts with chain-of-thought enabled
+4. Critic evaluates novelty, coherence, usefulness and assigns routing flags
+5. Notepad stores active thoughts (read/write enabled)
+6. Intrusion Log tracks any intrusive thoughts with intensity/difficulty
+7. Browser Module provides external context via WEB_SEARCH
+8. Loop continues with new context until exhaustion signal
 ```
 
-### Synthesis Cycle Flow
+### PARTIAL_WAKE Mode Flow (Brain Break)
 ```
-1. Scheduler triggers synthesis cycle
-2. Memory Curator provides thought history
-3. Synthesizer identifies patterns and connections
-4. Critic evaluates synthesis quality
-5. Memory Curator stores new insights
-6. System returns to continuous thinking
+1. Driver switches to PARTIAL_WAKE mode after exhaustion signal
+2. Brain Break Manager generates creative, free-association outputs
+3. Synthesizer creates shallow, rapid ideas for mood shifting
+4. Notepad stores creative associations (read/write enabled)
+5. Browser Module supports virtual walks and internet browsing
+6. Memory state indirectly modified via new associative links
+7. System returns to ACTIVE mode when break complete
+```
+
+### DEFAULT Mode Flow (Sleep/Memory Consolidation)
+```
+1. Driver switches to DEFAULT mode for memory consolidation
+2. Memory Curator consolidates and labels memories
+3. Chain-of-thought disabled, no memory writes
+4. Notepad disabled (scratchpad disabled)
+5. System processes existing thoughts without generation
+6. Memory consolidation and pruning occurs
+7. System returns to ACTIVE mode when consolidation complete
+```
+
+### Intrusion Processing Flow
+```
+1. Intrusion Log captures external input with intensity/difficulty parameters
+2. High-difficulty thoughts increase distraction and require suppression
+3. Critic evaluates urgency and suppression requirements
+4. Browser Module retrieves additional context if needed
+5. Synthesizer integrates with existing thoughts
+6. Memory Curator provides context (retrieval only)
+7. Response generated and returned
 ```
 
 ## Technology Stack Recommendations
@@ -264,6 +314,27 @@ class ExternalSource:
 - **Message Queue**: Redis Pub/Sub or RabbitMQ
 - **Monitoring**: Prometheus + Grafana
 - **Logging**: Structured JSON logging
+
+### Model Selection Decision Matrix
+
+Based on the design requirements, here's the feasibility analysis:
+
+| Criteria           | Off‑the‑shelf LLM | Custom PyTorch NN |
+| ------------------ | ----------------- | ----------------- |
+| Continuous Learn   | Limited           | Native support    |
+| Chain‑of‑Thought   | Prompt‑based      | Configurable      |
+| Internet Access    | API‑driven        | Implementable     |
+| Intrusion Modeling | Prompt‑driven     | Architectural     |
+| Cost               | Minimal           | Compute + Dev     |
+
+### Recommended Approach: Off-the-shelf LLM with Prompt Engineering
+
+**Rationale**: 
+- Cost-effective for initial implementation
+- Proven performance on language tasks
+- Can implement chain-of-thought via prompts
+- Ollama models with plugin/browsing capabilities for internet access
+- Intrusion parameters can be handled via prompt wrappers
 
 ### Alternative Architectures
 
