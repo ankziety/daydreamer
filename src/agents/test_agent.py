@@ -28,6 +28,8 @@ class TestAgent(Agent):
         super().__init__(config)
         self.counter = 0
         self.task = None
+        # Register test event handler
+        self.register_event_handler("test", self._handle_test_event)
         logger.info(f"Test agent {config.agent_id} created")
     
     async def _on_start(self):
@@ -76,14 +78,8 @@ class TestAgent(Agent):
     
     async def handle_event(self, event: AgentEvent) -> bool:
         """Override event handling to add test-specific logic"""
-        # Call parent implementation first
-        result = await super().handle_event(event)
-        
-        if result and event.event_type == "test":
-            # Handle test-specific events
-            await self._handle_test_event(event)
-        
-        return result
+        # Call parent implementation which will handle registered handlers
+        return await super().handle_event(event)
     
     async def _handle_test_event(self, event: AgentEvent):
         """Handle test-specific events"""
