@@ -3,6 +3,25 @@ Agents Package
 Contains intelligent agent implementations
 """
 
-from .intelligent_agent import IntelligentAgent, AgentConfig, AgentState, AgentMemory
+from .agent import Agent, AgentConfig, AgentState, AgentEvent
 
-__all__ = ["IntelligentAgent", "AgentConfig", "AgentState", "AgentMemory"]
+# Import intelligent agent components conditionally to avoid import issues
+try:
+    from .intelligent_agent import IntelligentAgent, AgentConfig as IntelligentAgentConfig, AgentState as IntelligentAgentState, AgentMemory
+    __all__ = [
+        "Agent", 
+        "AgentConfig", 
+        "AgentState", 
+        "AgentEvent",
+        "IntelligentAgent", 
+        "IntelligentAgentConfig", 
+        "IntelligentAgentState", 
+        "AgentMemory"
+    ]
+except ImportError:
+    __all__ = [
+        "Agent", 
+        "AgentConfig", 
+        "AgentState", 
+        "AgentEvent"
+    ]
