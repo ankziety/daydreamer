@@ -3,7 +3,7 @@ Intrusive Thoughts System for Default Mode Network
 
 This system captures and processes intrusive thoughts with parameterized intensity
 and difficulty levels. It simulates the natural occurrence of unwanted or
-random thoughts that can interrupt normal cognitive processing.
+random thoughts that can interrupt normal cognitive processing using AI-generated content.
 """
 
 import asyncio
@@ -15,11 +15,13 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Optional, Any
 from enum import Enum
 
+from .ai_thought_generator import AIThoughtGenerator, ThoughtContext, AIThoughtConfig
+
 logger = logging.getLogger(__name__)
 
 
 class ThoughtType(Enum):
-    """Types of intrusive thoughts"""
+    """Types of intrusive thoughts - maps to AI thought contexts"""
     RANDOM = "random"           # Random, unrelated thoughts
     WORRY = "worry"             # Anxiety-inducing thoughts
     MEMORY = "memory"           # Sudden memory recalls
@@ -27,6 +29,19 @@ class ThoughtType(Enum):
     SENSORY = "sensory"         # Sensory-triggered thoughts
     PHILOSOPHICAL = "philosophical"  # Deep questions
     ABSURD = "absurd"           # Absurd or surreal thoughts
+
+    def to_thought_context(self) -> ThoughtContext:
+        """Convert to AI thought context"""
+        mapping = {
+            self.RANDOM: ThoughtContext.RANDOM,
+            self.WORRY: ThoughtContext.WORRY,
+            self.MEMORY: ThoughtContext.MEMORY,
+            self.CREATIVE: ThoughtContext.CREATIVE,
+            self.SENSORY: ThoughtContext.SENSORY,
+            self.PHILOSOPHICAL: ThoughtContext.PHILOSOPHICAL,
+            self.ABSURD: ThoughtContext.ABSURD
+        }
+        return mapping.get(self, ThoughtContext.RANDOM)
 
 
 @dataclass
@@ -82,7 +97,8 @@ class IntrusiveThoughtsSystem:
     def __init__(self, 
                  spontaneous_rate: float = 0.1,  # thoughts per second
                  max_pending: int = 10,
-                 suppression_decay: float = 0.95):
+                 suppression_decay: float = 0.95,
+                 ai_config: AIThoughtConfig = None):
         """
         Initialize the intrusive thoughts system.
         
@@ -90,10 +106,14 @@ class IntrusiveThoughtsSystem:
             spontaneous_rate: Rate of spontaneous thought generation
             max_pending: Maximum pending thoughts to keep
             suppression_decay: Rate at which suppression effort decays
+            ai_config: Configuration for AI thought generation
         """
         self.spontaneous_rate = spontaneous_rate
         self.max_pending = max_pending
         self.suppression_decay = suppression_decay
+        
+        # Initialize AI thought generator
+        self.ai_generator = AIThoughtGenerator(ai_config or AIThoughtConfig())
         
         # Thought storage
         self.pending_thoughts: List[IntrusiveThought] = []
@@ -119,103 +139,6 @@ class IntrusiveThoughtsSystem:
             "average_difficulty": 0.0,
             "most_common_type": None
         }
-        
-        # Thought templates for generation
-        self.thought_templates = {
-            ThoughtType.RANDOM: [
-                "What if {subject} could {action}?",
-                "I wonder about {concept}...",
-                "Suddenly thinking about {memory}",
-                "Random image of {visual} pops into mind",
-                "{question} - why am I thinking this?",
-                "Completely unrelated: {random_fact}"
-            ],
-            ThoughtType.WORRY: [
-                "What if something goes wrong with {concern}?",
-                "I should worry about {potential_problem}",
-                "Did I forget to {task}?",
-                "What if {fear} happens?",
-                "I'm anxious about {future_event}"
-            ],
-            ThoughtType.CREATIVE: [
-                "What if I created {idea}?",
-                "Sudden inspiration: {creative_concept}",
-                "New way to approach {problem}",
-                "Creative connection between {concept1} and {concept2}",
-                "Art idea: {artistic_vision}"
-            ],
-            ThoughtType.PHILOSOPHICAL: [
-                "What is the meaning of {concept}?",
-                "Why do we {human_behavior}?",
-                "What if consciousness is {theory}?",
-                "Deep thought: {philosophical_question}",
-                "The nature of {abstract_concept}"
-            ],
-            ThoughtType.ABSURD: [
-                "What if {impossible_thing} was real?",
-                "Absurd scenario: {surreal_situation}",
-                "Reality glitch: {nonsensical_event}",
-                "Dream-like thought: {bizarre_imagery}",
-                "Completely impossible: {absurd_concept}"
-            ],
-            ThoughtType.MEMORY: [
-                "Sudden memory of {past_event}",
-                "Remembering {person} saying {quote}",
-                "Flashback to {time_period}",
-                "Nostalgic thought about {childhood_memory}",
-                "Random recall: {forgotten_detail}"
-            ],
-            ThoughtType.SENSORY: [
-                "Imagining the taste of {food}",
-                "Hearing {sound} in my mind",
-                "Feeling of {texture} on skin",
-                "Smell of {scent} suddenly remembered",
-                "Visual of {color} and {shape}"
-            ]
-        }
-        
-        # Content variables for template generation
-        self.content_variables = {
-            "subject": ["cats", "robots", "trees", "clouds", "books", "music"],
-            "action": ["fly", "think", "dance", "sing", "write", "dream"],
-            "concept": ["time", "space", "infinity", "consciousness", "reality", "purpose"],
-            "memory": ["childhood", "yesterday", "school", "summer", "friends", "family"],
-            "visual": ["purple elephant", "flying car", "crystal mountain", "golden rain"],
-            "question": ["Why is this happening?", "What's the point?", "How does this work?"],
-            "random_fact": ["bananas are berries", "octopuses have three hearts", "honey never spoils"],
-            "concern": ["work", "relationships", "health", "future", "mistakes", "decisions"],
-            "potential_problem": ["missed deadline", "forgotten task", "broken system", "lost data"],
-            "task": ["turn off the stove", "send that email", "lock the door", "save the file"],
-            "fear": ["failure", "embarrassment", "loss", "change", "unknown", "judgment"],
-            "future_event": ["presentation", "meeting", "deadline", "conversation", "decision"],
-            "idea": ["art", "story", "invention", "solution", "design", "experiment"],
-            "creative_concept": ["musical rhythm", "color combination", "story plot", "artistic style"],
-            "problem": ["communication", "efficiency", "creativity", "learning", "connection"],
-            "concept1": ["music", "mathematics", "nature", "technology", "emotion"],
-            "concept2": ["language", "color", "movement", "structure", "pattern"],
-            "artistic_vision": ["dancing shadows", "liquid geometry", "emotional landscape"],
-            "human_behavior": ["laugh", "cry", "create", "destroy", "connect", "isolate"],
-            "theory": ["information", "pattern", "energy", "connection", "emergence"],
-            "philosophical_question": ["Why do we exist?", "What is real?", "Who are we?"],
-            "abstract_concept": ["love", "beauty", "truth", "justice", "freedom", "meaning"],
-            "impossible_thing": ["invisible elephants", "time crystals", "singing colors"],
-            "surreal_situation": ["gravity reversal", "words becoming solid", "thoughts visible"],
-            "nonsensical_event": ["Tuesday being green", "numbers singing", "silence being loud"],
-            "bizarre_imagery": ["melting clocks", "square circles", "backwards waterfalls"],
-            "absurd_concept": ["edible music", "transparent thoughts", "heavy light"],
-            "past_event": ["first day of school", "summer vacation", "birthday party"],
-            "person": ["grandmother", "teacher", "friend", "stranger", "child"],
-            "quote": ["be yourself", "time flies", "follow your dreams", "stay curious"],
-            "time_period": ["childhood", "high school", "last year", "last summer"],
-            "childhood_memory": ["playground", "bedtime stories", "favorite toy", "pet"],
-            "forgotten_detail": ["door color", "person's name", "song lyrics", "phone number"],
-            "food": ["chocolate", "strawberries", "coffee", "pizza", "ice cream"],
-            "sound": ["rain", "ocean waves", "bird songs", "wind chimes", "laughter"],
-            "texture": ["silk", "sandpaper", "velvet", "tree bark", "cool metal"],
-            "scent": ["roses", "coffee", "ocean breeze", "pine trees", "vanilla"],
-            "color": ["deep blue", "warm orange", "soft purple", "bright green"],
-            "shape": ["spirals", "crystals", "flowing curves", "geometric patterns"]
-        }
     
     async def start(self):
         """Start the intrusive thoughts generation system"""
@@ -224,6 +147,10 @@ class IntrusiveThoughtsSystem:
         
         self.is_running = True
         logger.info("🌀 Starting Intrusive Thoughts System")
+        
+        # Initialize AI generator
+        await self.ai_generator.initialize()
+        logger.info(f"🤖 AI Generator Status: {self.ai_generator.get_status()}")
         
         # Start spontaneous thought generation
         self.generator_task = asyncio.create_task(self._spontaneous_generation_loop())
@@ -249,7 +176,7 @@ class IntrusiveThoughtsSystem:
                 if (len(self.pending_thoughts) < self.max_pending and
                     random.random() < self.spontaneous_rate):
                     
-                    thought = self._generate_spontaneous_thought()
+                    thought = await self._generate_spontaneous_thought()
                     self.pending_thoughts.append(thought)
                     self.stats["total_generated"] += 1
                     
@@ -269,13 +196,10 @@ class IntrusiveThoughtsSystem:
                 logger.error(f"Error in spontaneous thought generation: {e}")
                 await asyncio.sleep(1.0)
     
-    def _generate_spontaneous_thought(self) -> IntrusiveThought:
-        """Generate a spontaneous intrusive thought"""
+    async def _generate_spontaneous_thought(self) -> IntrusiveThought:
+        """Generate a spontaneous intrusive thought using AI"""
         # Choose thought type based on current patterns
         thought_type = self._choose_thought_type()
-        
-        # Generate content from template
-        content = self._generate_content_from_template(thought_type)
         
         # Assign intensity and difficulty
         intensity = random.randint(1, 10)
@@ -284,6 +208,14 @@ class IntrusiveThoughtsSystem:
         # Higher intensity thoughts are often harder to suppress
         if intensity > 7:
             difficulty = max(difficulty, random.randint(5, 10))
+        
+        # Generate AI-powered content
+        try:
+            context = thought_type.to_thought_context()
+            content = await self.ai_generator.generate_thought(context, intensity, difficulty)
+        except Exception as e:
+            logger.warning(f"AI generation failed, using fallback: {e}")
+            content = f"A {thought_type.value} thought emerges (intensity: {intensity})"
         
         return IntrusiveThought(
             content=content,
@@ -317,19 +249,7 @@ class IntrusiveThoughtsSystem:
             choices.extend([thought_type] * weight)
         
         return random.choice(choices)
-    
-    def _generate_content_from_template(self, thought_type: ThoughtType) -> str:
-        """Generate thought content from template"""
-        templates = self.thought_templates.get(thought_type, ["Random thought"])
-        template = random.choice(templates)
-        
-        # Replace variables in template
-        content = template
-        for var, values in self.content_variables.items():
-            if f"{{{var}}}" in content:
-                content = content.replace(f"{{{var}}}", random.choice(values))
-        
-        return content
+
     
     def add_thought(self, content: str, intensity: int = 5, difficulty: int = 3, 
                    thought_type: ThoughtType = ThoughtType.RANDOM, source: str = "external",

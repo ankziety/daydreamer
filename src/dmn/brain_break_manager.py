@@ -2,7 +2,7 @@
 Brain Break Manager for Default Mode Network PARTIAL_WAKE mode
 
 This component manages natural cognitive rest periods with creative free-association,
-generating enjoyable, abstract associations to clear thought stagnation and
+generating AI-powered associations to clear thought stagnation and
 shift mood/environment through virtual activities.
 """
 
@@ -13,6 +13,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional, Any, Tuple
 from enum import Enum
+
+from .ai_thought_generator import AIThoughtGenerator, AIThoughtConfig
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +69,8 @@ class BrainBreakManager:
     def __init__(self,
                  default_break_duration: float = 30.0,  # seconds
                  min_break_interval: float = 120.0,     # minimum time between breaks
-                 creativity_boost_factor: float = 1.5):
+                 creativity_boost_factor: float = 1.5,
+                 ai_config: AIThoughtConfig = None):
         """
         Initialize the Brain Break Manager.
         
@@ -75,15 +78,29 @@ class BrainBreakManager:
             default_break_duration: Default duration of breaks in seconds
             min_break_interval: Minimum time between breaks
             creativity_boost_factor: Multiplier for creativity during breaks
+            ai_config: Configuration for AI content generation
         """
         self.default_break_duration = default_break_duration
         self.min_break_interval = min_break_interval
         self.creativity_boost_factor = creativity_boost_factor
         
+        # Initialize AI generator for break content
+        self.ai_generator = AIThoughtGenerator(ai_config or AIThoughtConfig())
+        
         # Current break state
         self.current_break: Optional[BrainBreak] = None
         self.last_break_time: Optional[datetime] = None
         self.break_history: List[BrainBreak] = []
+        
+        # Statistics
+        self.stats = {
+            "total_breaks": 0,
+            "successful_mood_shifts": 0,
+            "average_creativity_boost": 0.0,
+            "most_used_break_type": None,
+            "total_associations_generated": 0,
+            "average_break_duration": 0.0
+        }
         
         # Association templates and content
         self.association_templates = {
@@ -365,20 +382,25 @@ class BrainBreakManager:
         return break_session
     
     async def _generate_activities(self, break_session: BrainBreak, context) -> List[str]:
-        """Generate specific activities for the break session"""
+        """Generate AI-powered activities for the break session"""
         break_type = break_session.break_type
-        templates = self.association_templates.get(break_type, [])
         
-        # Generate 2-4 activities
-        num_activities = random.randint(2, 4)
-        activities = []
+        # Ensure AI generator is initialized
+        if not self.ai_generator.is_initialized:
+            await self.ai_generator.initialize()
         
-        for _ in range(num_activities):
-            template = random.choice(templates)
-            activity = self._fill_template(template)
-            activities.append(activity)
-        
-        return activities
+        try:
+            # Use AI to generate activities
+            activities = await self.ai_generator.generate_brain_break_content(break_type.value)
+            return activities[:4]  # Limit to 4 activities
+        except Exception as e:
+            logger.warning(f"AI activity generation failed, using fallback: {e}")
+            # Simple fallback activities
+            return [
+                f"Take a moment for {break_type.value} activity",
+                f"Allow mind to wander with {break_type.value}",
+                f"Engage in brief {break_type.value} experience"
+            ]
     
     async def _generate_associations(self, break_session: BrainBreak) -> List[str]:
         """Generate creative associations during the break"""
@@ -408,18 +430,6 @@ class BrainBreakManager:
         
         self.stats["total_associations_generated"] += len(associations)
         return associations
-    
-    def _fill_template(self, template: str) -> str:
-        """Fill a template with random content variables"""
-        filled_template = template
-        
-        # Replace all variables in the template
-        for var, values in self.content_variables.items():
-            placeholder = f"{{{var}}}"
-            if placeholder in filled_template:
-                filled_template = filled_template.replace(placeholder, random.choice(values))
-        
-        return filled_template
     
     async def _calculate_mood_shift(self, break_session: BrainBreak, context) -> bool:
         """Calculate if the break achieved a mood shift"""

@@ -23,16 +23,17 @@ logging.basicConfig(level=logging.WARNING)
 
 
 async def demonstrate_dmn():
-    """Demonstrate the Default Mode Network in action"""
+    """Demonstrate the Default Mode Network with AI-powered thoughts"""
     
-    print("🧠 DEFAULT MODE NETWORK DEMONSTRATION")
+    print("🧠 AI-POWERED DEFAULT MODE NETWORK DEMONSTRATION")
     print("=" * 60)
-    print("This system implements a biologically-inspired DMN that allows")
-    print("AI systems to have natural 'intrusive thoughts' and 'random ideas'")
+    print("This system implements a biologically-inspired DMN that uses")
+    print("AI models to generate natural 'intrusive thoughts' and 'random ideas'")
+    print("instead of template-based content generation.")
     print("=" * 60)
     
     # Initialize system
-    print("\n🔧 Initializing DMN components...")
+    print("\n🔧 Initializing AI-powered DMN components...")
     
     driver = DMNDriver(active_cycle_limit=6, break_duration=8.0)
     intrusive_thoughts = IntrusiveThoughtsSystem(spontaneous_rate=0.4, max_pending=3)
