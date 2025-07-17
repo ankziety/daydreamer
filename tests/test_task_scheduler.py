@@ -121,9 +121,9 @@ class TestSchedulingAlgorithms:
         algorithm = PriorityAlgorithm()
         
         tasks = [
-            Task(name="Low Priority", priority=TaskPriority.LOW),
-            Task(name="High Priority", priority=TaskPriority.HIGH),
-            Task(name="Normal Priority", priority=TaskPriority.NORMAL)
+            Task(name="Low Priority", description="Low priority task", priority=TaskPriority.LOW),
+            Task(name="High Priority", description="High priority task", priority=TaskPriority.HIGH),
+            Task(name="Normal Priority", description="Normal priority task", priority=TaskPriority.NORMAL)
         ]
         
         # High priority should be selected first
@@ -135,9 +135,9 @@ class TestSchedulingAlgorithms:
         algorithm = RoundRobinAlgorithm(time_slice=5.0)
         
         tasks = [
-            Task(name="Task 1", priority=TaskPriority.NORMAL),
-            Task(name="Task 2", priority=TaskPriority.NORMAL),
-            Task(name="Task 3", priority=TaskPriority.NORMAL)
+            Task(name="Task 1", description="First task", priority=TaskPriority.NORMAL),
+            Task(name="Task 2", description="Second task", priority=TaskPriority.NORMAL),
+            Task(name="Task 3", description="Third task", priority=TaskPriority.NORMAL)
         ]
         
         # Should cycle through tasks
@@ -155,9 +155,9 @@ class TestSchedulingAlgorithms:
         
         now = datetime.now()
         tasks = [
-            Task(name="Late Deadline", deadline=now + timedelta(hours=2)),
-            Task(name="Early Deadline", deadline=now + timedelta(minutes=30)),
-            Task(name="No Deadline")
+            Task(name="Late Deadline", description="Task with late deadline", deadline=now + timedelta(hours=2)),
+            Task(name="Early Deadline", description="Task with early deadline", deadline=now + timedelta(minutes=30)),
+            Task(name="No Deadline", description="Task with no deadline")
         ]
         
         # Early deadline should be selected first
@@ -169,8 +169,8 @@ class TestSchedulingAlgorithms:
         algorithm = HybridAlgorithm()
         
         tasks = [
-            Task(name="High Priority", priority=TaskPriority.HIGH),
-            Task(name="Low Priority", priority=TaskPriority.LOW)
+            Task(name="High Priority", description="High priority task", priority=TaskPriority.HIGH),
+            Task(name="Low Priority", description="Low priority task", priority=TaskPriority.LOW)
         ]
         
         # Should select based on current phase
@@ -398,9 +398,9 @@ class TestTaskScheduler:
         """Test task summary generation"""
         # Create tasks with different priorities and states
         tasks = [
-            Task(name="High Priority", priority=TaskPriority.HIGH),
-            Task(name="Low Priority", priority=TaskPriority.LOW),
-            Task(name="Normal Priority", priority=TaskPriority.NORMAL)
+            Task(name="High Priority", description="High priority task", priority=TaskPriority.HIGH),
+            Task(name="Low Priority", description="Low priority task", priority=TaskPriority.LOW),
+            Task(name="Normal Priority", description="Normal priority task", priority=TaskPriority.NORMAL)
         ]
         
         for task in tasks:

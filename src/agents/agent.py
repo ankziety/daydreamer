@@ -224,15 +224,16 @@ class Agent(ABC):
             return False
         
         try:
-            self.last_activity = datetime.now()
-            self.stats["events_processed"] += 1
-            
             # Find handlers for this event type
             handlers = self.event_handlers.get(event.event_type, [])
             
             if not handlers:
                 logger.debug(f"No handlers for event type {event.event_type} in agent {self.config.agent_id}")
                 return False
+            
+            # Update activity and counter only if we have handlers
+            self.last_activity = datetime.now()
+            self.stats["events_processed"] += 1
             
             # Call all registered handlers
             for handler in handlers:

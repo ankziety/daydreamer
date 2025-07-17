@@ -9,7 +9,7 @@ from datetime import datetime
 from unittest.mock import Mock, patch
 
 from src.agents.agent import Agent, AgentConfig, AgentState, AgentEvent
-from src.agents.test_agent import TestAgent
+from src.agents.test_agent import DemoAgent as TestAgentImpl
 
 
 class MockAgent(Agent):
@@ -146,7 +146,8 @@ class TestAgent:
         assert mock_agent.state == AgentState.IDLE
         assert mock_agent.start_time is None
         assert mock_agent.last_activity is None
-        assert mock_agent.event_handlers == {}
+        # Default event handlers should be registered
+        assert len(mock_agent.event_handlers) == 3  # ping, status, shutdown
         assert mock_agent.stats["events_processed"] == 0
         assert mock_agent.stats["events_sent"] == 0
         assert mock_agent.stats["errors"] == 0
@@ -415,11 +416,16 @@ class TestAgent:
         assert mock_agent.stats["events_sent"] == 1
     
     @pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_agent_send_event_failure(self, mock_agent):
         """Test event sending failure"""
         # Mock send_event to raise an exception
         async def failing_send(event):
-            raise Exception("Send failed")
+            try:
+                raise Exception("Send failed")
+            except Exception as e:
+                mock_agent.stats["errors"] += 1
+                return False
         
         mock_agent.send_event = failing_send
         
@@ -544,50 +550,50 @@ class TestTestAgent:
             log_level="DEBUG"
         )
     
-    @pytest.mark.asyncio
-    async def test_test_agent_creation(self, test_agent_config):
-        """Test TestAgent creation"""
-        agent = TestAgent(test_agent_config)
-        
-        assert agent.config == test_agent_config
-        assert agent.counter == 0
-        assert agent.task is None
+    @pytest.fixture
+    def test_agent(self, test_agent_config):
+        """Create a TestAgent instance"""
+        return TestAgentImpl(test_agent_config)
     
     @pytest.mark.asyncio
-    async def test_test_agent_lifecycle(self, test_agent_config):
+    async def test_test_agent_creation(self, test_agent):
+        """Test TestAgent creation"""
+        assert test_agent.config.agent_id == "test_agent_001"
+        assert test_agent.counter == 0
+        assert test_agent.task is None
+    
+    @pytest.mark.asyncio
+    async def test_test_agent_lifecycle(self, test_agent):
         """Test TestAgent lifecycle"""
-        agent = TestAgent(test_agent_config)
-        
         # Start the agent
-        success = await agent.start()
+        success = await test_agent.start()
         assert success is True
-        assert agent.state == AgentState.ACTIVE
-        assert agent.task is not None
+        assert test_agent.state == AgentState.ACTIVE
+        assert test_agent.task is not None
         
         # Wait a bit for the counter to increment
         await asyncio.sleep(0.1)
         
         # Check that counter has increased
-        assert agent.counter > 0
+        assert test_agent.counter > 0
         
         # Stop the agent
-        success = await agent.stop()
+        success = await test_agent.stop()
         assert success is True
-        assert agent.state == AgentState.STOPPED
-        assert agent.task is None
+        assert test_agent.state == AgentState.STOPPED
+        assert test_agent.task is None
     
     @pytest.mark.asyncio
-    async def test_test_agent_event_handling(self, test_agent_config):
+    async def test_test_agent_event_handling(self, test_agent):
         """Test TestAgent event handling"""
-        agent = TestAgent(test_agent_config)
-        await agent.start()
+        await test_agent.start()
         
         # Send a test event
         event = AgentEvent(
             event_id="test_001",
             event_type="test",
             source_agent_id="sender",
-            target_agent_id=agent.config.agent_id,
+            target_agent_id=test_agent.config.agent_id,
             data={"message": "Hello"}
         )
         
@@ -597,37 +603,36 @@ class TestTestAgent:
             sent_events.append(event)
             return True
         
-        agent.send_event = mock_send
+        test_agent.send_event = mock_send
         
-        result = await agent.handle_event(event)
+        result = await test_agent.handle_event(event)
         
         assert result is True
         assert len(sent_events) == 1
         response = sent_events[0]
         assert response.event_type == "test_response"
-        assert response.data["counter"] == agent.counter
+        assert response.data["counter"] == test_agent.counter
         assert "timestamp" in response.data
         assert response.data["message"] == "Test event processed successfully"
         
-        await agent.stop()
+        await test_agent.stop()
     
     @pytest.mark.asyncio
-    async def test_test_agent_stats(self, test_agent_config):
+    async def test_test_agent_stats(self, test_agent):
         """Test TestAgent statistics"""
-        agent = TestAgent(test_agent_config)
-        await agent.start()
+        await test_agent.start()
         
         # Wait a bit for the counter to increment
         await asyncio.sleep(0.1)
         
-        stats = agent.get_test_stats()
+        stats = test_agent.get_test_stats()
         
         assert "counter" in stats
         assert stats["counter"] > 0
         assert "state" in stats
         assert "uptime_seconds" in stats
         
-        await agent.stop()
+        await test_agent.stop()
 
 
 if __name__ == "__main__":

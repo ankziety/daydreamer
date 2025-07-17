@@ -13,7 +13,7 @@ from .agent import Agent, AgentConfig, AgentEvent
 logger = logging.getLogger(__name__)
 
 
-class TestAgent(Agent):
+class DemoAgent(Agent):
     """
     A simple test agent that demonstrates the base Agent functionality.
     
@@ -46,6 +46,7 @@ class TestAgent(Agent):
                 await self.task
             except asyncio.CancelledError:
                 pass
+            self.task = None
     
     async def _on_pause(self):
         """Pause the test agent"""
@@ -117,7 +118,7 @@ async def test_agent_functionality():
     )
     
     # Create and start the agent
-    agent = TestAgent(config)
+    agent = DemoAgent(config)
     
     print("🤖 Testing Agent Functionality")
     print("=" * 50)
