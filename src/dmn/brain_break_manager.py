@@ -589,13 +589,13 @@ async def test_brain_break_manager():
     # Generate break activities
     activities = await manager.generate_break_activities(context)
     
-    print(f"🎯 Generated {len(activities)} break activities:")
+    print(f" Generated {len(activities)} break activities:")
     for i, activity in enumerate(activities, 1):
         print(f"   {i}. {activity}")
     
     current_break = manager.get_current_break()
     if current_break:
-        print(f"\n🔄 Current break: {current_break.break_type.value}")
+        print(f"\n Current break: {current_break.break_type.value}")
         print(f"   Duration: {current_break.duration.total_seconds()}s")
         print(f"   Mood shift achieved: {current_break.mood_shift_achieved}")
         print(f"   Creativity boost: {current_break.creativity_boost:.2f}")
@@ -611,9 +611,9 @@ async def test_brain_break_manager():
     
     # Get statistics
     stats = manager.get_stats()
-    print(f"\n📊 Brain Break Manager stats: {stats}")
+    print(f"\n Brain Break Manager stats: {stats}")
     
-    print("✅ Brain Break Manager test completed")
+    print(" Brain Break Manager test completed")
 
 
 if __name__ == "__main__":

@@ -120,7 +120,7 @@ class DMNDriver:
         self.stats["start_time"] = datetime.now()
         self.context.timestamp = datetime.now()
         
-        logger.info("🧠 Starting Default Mode Network Driver")
+        logger.info(" Starting Default Mode Network Driver")
         
         # Start the main DMN loop
         self.driver_task = asyncio.create_task(self._dmn_main_loop())
@@ -144,7 +144,7 @@ class DMNDriver:
             uptime = (datetime.now() - self.stats["start_time"]).total_seconds()
             self.stats["uptime_seconds"] = uptime
         
-        logger.info("🛑 Stopped Default Mode Network Driver")
+        logger.info(" Stopped Default Mode Network Driver")
     
     async def _dmn_main_loop(self):
         """Main DMN coordination loop"""
@@ -232,7 +232,7 @@ class DMNDriver:
         self.context.mode = new_mode
         self.stats["mode_transitions"] += 1
         
-        logger.info(f"🔄 DMN Mode transition: {old_mode.value} → {new_mode.value}")
+        logger.info(f" DMN Mode transition: {old_mode.value} → {new_mode.value}")
         
         # Mode-specific transition logic
         if new_mode == SystemMode.PARTIAL_WAKE:
@@ -453,7 +453,7 @@ async def test_dmn_driver():
     driver.register_component("intrusive_thoughts", mock)
     driver.register_component("browser", mock)
     
-    print("🧠 Testing DMN Driver...")
+    print(" Testing DMN Driver...")
     await driver.start()
     
     # Let it run for a bit
@@ -466,10 +466,10 @@ async def test_dmn_driver():
     await asyncio.sleep(2)
     
     stats = driver.get_stats()
-    print(f"📊 DMN Stats after test: {stats}")
+    print(f" DMN Stats after test: {stats}")
     
     await driver.stop()
-    print("✅ DMN Driver test completed")
+    print(" DMN Driver test completed")
 
 
 if __name__ == "__main__":

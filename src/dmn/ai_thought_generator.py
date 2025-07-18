@@ -24,6 +24,12 @@ try:
 except ImportError:
     GEMMA_AVAILABLE = False
 
+try:
+    from ..memory import MemoryStore, MemoryType
+    MEMORY_AVAILABLE = True
+except ImportError:
+    MEMORY_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 
@@ -56,43 +62,33 @@ class AIThoughtGenerator:
     and random ideas using language models instead of templates.
     """
     
-    def __init__(self, config: AIThoughtConfig = None):
+    def __init__(self, config: AIThoughtConfig = None, memory_store: Optional[object] = None):
         self.config = config or AIThoughtConfig()
+        self.memory_store = memory_store
         self.model = None
         self.tokenizer = None
         self.gemma_provider = None
         self.generator = None
         self.is_initialized = False
         
-        # System prompts for unbiased thought generation (no leading content)
-        self.system_prompts = {
-            ThoughtContext.INTRUSIVE: """You are generating intrusive thoughts that naturally occur in a human Default Mode Network. Generate a single, spontaneous thought that would suddenly pop into someone's mind uninvited. The thought should be natural, brief (1-2 sentences), and feel like it came from nowhere. Do not use template phrases or leading words. Just generate the complete thought.""",
-            
-            ThoughtContext.RANDOM: """You are generating random thoughts that spontaneously arise in human consciousness. Generate a single, completely random thought that would naturally occur to someone. The thought should be natural, brief (1-2 sentences), and feel spontaneous. Do not use template phrases or leading words. Just generate the complete thought.""",
-            
-            ThoughtContext.CREATIVE: """You are generating creative thoughts that naturally emerge in a human Default Mode Network. Generate a single, creative idea or inspiration that would spontaneously occur to someone. The thought should be natural, brief (1-2 sentences), and feel like a genuine creative insight. Do not use template phrases or leading words. Just generate the complete thought.""",
-            
-            ThoughtContext.PHILOSOPHICAL: """You are generating philosophical thoughts that naturally arise in human consciousness. Generate a single, philosophical reflection or question that would spontaneously occur to someone. The thought should be natural, brief (1-2 sentences), and feel like genuine philosophical contemplation. Do not use template phrases or leading words. Just generate the complete thought.""",
-            
-            ThoughtContext.WORRY: """You are generating worry thoughts that naturally occur in a human Default Mode Network. Generate a single, anxious or concerned thought that would spontaneously arise in someone's mind. The thought should be natural, brief (1-2 sentences), and feel like genuine worry. Do not use template phrases or leading words. Just generate the complete thought.""",
-            
-            ThoughtContext.MEMORY: """You are generating memory thoughts that naturally surface in human consciousness. Generate a single thought about a memory or past experience that would spontaneously come to mind. The thought should be natural, brief (1-2 sentences), and feel like genuine recollection. Do not use template phrases or leading words. Just generate the complete thought.""",
-            
-            ThoughtContext.SENSORY: """You are generating sensory thoughts that naturally occur in a human Default Mode Network. Generate a single thought involving sensory experience, imagination, or perception that would spontaneously arise. The thought should be natural, brief (1-2 sentences), and feel genuine. Do not use template phrases or leading words. Just generate the complete thought.""",
-            
-            ThoughtContext.ABSURD: """You are generating absurd thoughts that naturally pop into human consciousness. Generate a single, bizarre or impossible thought that would spontaneously occur to someone. The thought should be natural, brief (1-2 sentences), and feel genuinely absurd or surreal. Do not use template phrases or leading words. Just generate the complete thought."""
-        }
+        # Task-focused system prompts for Default Mode Network thought generation
+        self.base_system_prompt = """You are simulating Default Mode Network activation. During DMN states, the brain processes memories and generates spontaneous thoughts through associative connections. Given the memory chunks below, generate a single brief thought that could naturally emerge from these associations. The thought should feel spontaneous and unforced.
+
+Memory chunks:
+{memory_chunks}
+
+Generate one natural thought (1-2 sentences) that could arise from processing these memories."""
     
     async def initialize(self):
         """Initialize the AI thought generator"""
         if self.is_initialized:
             return
         
-        logger.info("🤖 Initializing AI Thought Generator...")
+        logger.info(" Initializing AI Thought Generator...")
         
         # Skip model loading if fallback is explicitly enabled
         if self.config.fallback_enabled and self.config.model_type == "fallback":
-            logger.info("⚠️ Using fallback mode only (no model loading)")
+            logger.info(" Using fallback mode only (no model loading)")
             self.is_initialized = True
             return
         
@@ -101,7 +97,7 @@ class AIThoughtGenerator:
             try:
                 self.gemma_provider = Gemma3NProvider()
                 if self.gemma_provider.is_available:
-                    logger.info("✅ Using Gemma 3N for thought generation")
+                    logger.info(" Using Gemma 3N for thought generation")
                     self.is_initialized = True
                     return
             except Exception as e:
@@ -110,21 +106,21 @@ class AIThoughtGenerator:
         # Fall back to GPT-2 if transformers available
         if TRANSFORMERS_AVAILABLE and self.config.model_type in ["gpt2", "local"]:
             try:
-                logger.info("🔄 Loading GPT-2 model...")
+                logger.info(" Loading GPT-2 model...")
                 self.generator = pipeline(
                     'text-generation',
                     model='gpt2',
                     tokenizer='gpt2',
                     device=-1  # CPU
                 )
-                logger.info("✅ Using GPT-2 for thought generation")
+                logger.info(" Using GPT-2 for thought generation")
                 self.is_initialized = True
                 return
             except Exception as e:
                 logger.warning(f"Failed to initialize GPT-2: {e}")
         
         if not self.is_initialized:
-            logger.warning("⚠️ No AI models available, using minimal fallback")
+            logger.warning(" No AI models available, using minimal fallback")
             if self.config.fallback_enabled:
                 self.is_initialized = True
     
@@ -133,7 +129,7 @@ class AIThoughtGenerator:
                              intensity: int = 5,
                              difficulty: int = 5) -> str:
         """
-        Generate an AI-powered thought based on context and parameters.
+        Generate an AI-powered thought based on context, parameters, and memory associations.
         
         Args:
             context: The type of thought to generate
@@ -146,8 +142,11 @@ class AIThoughtGenerator:
         if not self.is_initialized:
             await self.initialize()
         
-        # Get system prompt for context (no leading fragments)
-        system_prompt = self.system_prompts.get(context, self.system_prompts[ThoughtContext.RANDOM])
+        # Retrieve memory chunks for context
+        memory_chunks = await self._get_memory_chunks()
+        
+        # Create system prompt with memory context
+        system_prompt = self.base_system_prompt.format(memory_chunks=memory_chunks)
         
         # Generate using available model
         try:
@@ -160,6 +159,36 @@ class AIThoughtGenerator:
         except Exception as e:
             logger.error(f"Error generating thought: {e}")
             return await self._generate_fallback(system_prompt, context, intensity, difficulty)
+    
+    async def _get_memory_chunks(self) -> str:
+        """Retrieve 2-3 random memory chunks for thought association"""
+        if not self.memory_store:
+            return "No specific memories available - generating from general knowledge."
+        
+        try:
+            # Get 2-3 random recent memories for association
+            recent_memories = self.memory_store.get_recent_memories(hours=168, limit=10)  # Last week
+            if not recent_memories:
+                # Fall back to strongest memories if no recent ones
+                recent_memories = self.memory_store.get_strongest_memories(limit=10)
+            
+            if not recent_memories:
+                return "No specific memories available - generating from general knowledge."
+            
+            # Select 2-3 random memories
+            selected_count = min(3, len(recent_memories))
+            selected_memories = random.sample(recent_memories, selected_count)
+            
+            # Format memory chunks
+            chunks = []
+            for i, memory in enumerate(selected_memories, 1):
+                chunks.append(f"Memory {i}: {memory.content}")
+            
+            return "\n".join(chunks)
+            
+        except Exception as e:
+            logger.warning(f"Failed to retrieve memories: {e}")
+            return "Memory retrieval failed - generating from general knowledge."
     
     async def _generate_with_gemma(self, system_prompt: str, context: ThoughtContext, 
                                  intensity: int, difficulty: int) -> str:

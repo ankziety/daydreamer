@@ -84,7 +84,7 @@ class Agent(ABC):
         # Initialize the agent
         self._initialize()
         
-        logger.info(f"🤖 Created agent: {config.agent_id} ({config.name})")
+        logger.info(f" Created agent: {config.agent_id} ({config.name})")
     
     def _setup_logging(self):
         """Setup agent-specific logging"""
@@ -121,7 +121,7 @@ class Agent(ABC):
             # Call the abstract method for agent-specific startup
             await self._on_start()
             
-            logger.info(f"🚀 Started agent: {self.config.agent_id}")
+            logger.info(f" Started agent: {self.config.agent_id}")
             return True
             
         except Exception as e:
@@ -150,7 +150,7 @@ class Agent(ABC):
                 uptime = (datetime.now() - self.start_time).total_seconds()
                 self.stats["uptime_seconds"] = uptime
             
-            logger.info(f"🛑 Stopped agent: {self.config.agent_id}")
+            logger.info(f" Stopped agent: {self.config.agent_id}")
             return True
             
         except Exception as e:

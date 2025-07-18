@@ -150,7 +150,7 @@ class IntrusiveThoughtsSystem:
         
         # Initialize AI generator
         await self.ai_generator.initialize()
-        logger.info(f"🤖 AI Generator Status: {self.ai_generator.get_status()}")
+        logger.info(f" AI Generator Status: {self.ai_generator.get_status()}")
         
         # Start spontaneous thought generation
         self.generator_task = asyncio.create_task(self._spontaneous_generation_loop())
@@ -166,7 +166,7 @@ class IntrusiveThoughtsSystem:
             except asyncio.CancelledError:
                 pass
         
-        logger.info("🛑 Stopped Intrusive Thoughts System")
+        logger.info(" Stopped Intrusive Thoughts System")
     
     async def _spontaneous_generation_loop(self):
         """Main loop for generating spontaneous intrusive thoughts"""
@@ -180,7 +180,7 @@ class IntrusiveThoughtsSystem:
                     self.pending_thoughts.append(thought)
                     self.stats["total_generated"] += 1
                     
-                    logger.debug(f"💭 Generated intrusive thought: {thought.content[:50]}...")
+                    logger.debug(f" Generated intrusive thought: {thought.content[:50]}...")
                 
                 # Decay suppression efforts
                 self._decay_suppression()
@@ -267,7 +267,7 @@ class IntrusiveThoughtsSystem:
         if len(self.pending_thoughts) < self.max_pending:
             self.pending_thoughts.append(thought)
             self.stats["total_generated"] += 1
-            logger.debug(f"💭 Added external intrusive thought: {content[:50]}...")
+            logger.debug(f" Added external intrusive thought: {content[:50]}...")
         else:
             logger.warning("Too many pending intrusive thoughts, dropping new thought")
     
@@ -319,7 +319,7 @@ class IntrusiveThoughtsSystem:
         else:
             # Failed suppression might increase intensity
             thought.intensity = min(10, thought.intensity + 1)
-            logger.debug(f"❌ Failed to suppress thought: {thought.content[:30]}...")
+            logger.debug(f" Failed to suppress thought: {thought.content[:30]}...")
             return False
     
     def _decay_suppression(self):
@@ -333,7 +333,7 @@ class IntrusiveThoughtsSystem:
                 thought.intensity = max(1, thought.intensity - 1)  # Slightly weaker
                 self.pending_thoughts.append(thought)
                 self.suppressed_thoughts.remove(thought)
-                logger.debug(f"🔄 Thought resurfaced: {thought.content[:30]}...")
+                logger.debug(f" Thought resurfaced: {thought.content[:30]}...")
     
     def _update_statistics(self):
         """Update system statistics"""
@@ -422,7 +422,7 @@ async def test_intrusive_thoughts_system():
     
     # Get pending thoughts
     thoughts = await system.get_pending_thoughts()
-    print(f"💭 Retrieved {len(thoughts)} thoughts:")
+    print(f" Retrieved {len(thoughts)} thoughts:")
     for thought in thoughts:
         print(f"   - {thought.content} (intensity: {thought.intensity}, difficulty: {thought.difficulty})")
     
@@ -436,13 +436,13 @@ async def test_intrusive_thoughts_system():
     
     # Get statistics
     stats = system.get_stats()
-    print(f"📊 System stats: {stats}")
+    print(f" System stats: {stats}")
     
     summary = system.get_thought_summary()
     print(f"📋 Thought summary: {summary}")
     
     await system.stop()
-    print("✅ Intrusive Thoughts System test completed")
+    print(" Intrusive Thoughts System test completed")
 
 
 if __name__ == "__main__":

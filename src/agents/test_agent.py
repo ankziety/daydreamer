@@ -120,7 +120,7 @@ async def test_agent_functionality():
     # Create and start the agent
     agent = DemoAgent(config)
     
-    print("🤖 Testing Agent Functionality")
+    print(" Testing Agent Functionality")
     print("=" * 50)
     
     # Test 1: Agent creation and initialization
@@ -171,7 +171,7 @@ async def test_agent_functionality():
     for key, value in final_stats.items():
         print(f"   {key}: {value}")
     
-    print("\n✅ Agent functionality test completed!")
+    print("\n Agent functionality test completed!")
 
 
 if __name__ == "__main__":

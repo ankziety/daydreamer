@@ -311,7 +311,7 @@ class WebDashboard:
 <body>
     <div class="container">
         <div class="header">
-            <h1>🧠 Daydreamer Dashboard</h1>
+            <h1> Daydreamer Dashboard</h1>
             <p>Real-time monitoring of AI agent simulations</p>
         </div>
         
@@ -610,7 +610,7 @@ class WebDashboard:
             # Start simulation in background
             asyncio.create_task(self.simulation.start_simulation())
             
-            logger.info(f"🚀 Started simulation: {sim_config.simulation_id}")
+            logger.info(f" Started simulation: {sim_config.simulation_id}")
             
             return {
                 "success": True,
@@ -630,7 +630,7 @@ class WebDashboard:
             
             await self.simulation.stop_simulation()
             
-            logger.info("🛑 Stopped simulation")
+            logger.info(" Stopped simulation")
             
             return {
                 "success": True,
@@ -705,7 +705,7 @@ async def demo_web_dashboard():
     dashboard = WebDashboard(DashboardConfig(debug=True))
     
     print("🌐 Starting Daydreamer Web Dashboard...")
-    print(f"📊 Dashboard will be available at: http://localhost:{dashboard.config.port}")
+    print(f" Dashboard will be available at: http://localhost:{dashboard.config.port}")
     print("🎮 Use the dashboard to start and monitor simulations")
     
     await dashboard.start()

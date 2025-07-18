@@ -74,15 +74,15 @@ class BuilderSetup:
         tasks = self.get_team_tasks(team_name)
         
         print("\n" + "="*80)
-        print("🎉 WELCOME TO THE DAYDREAMER PROJECT! 🎉")
+        print(" WELCOME TO THE DAYDREAMER PROJECT! ")
         print("="*80)
         
         if builder_name:
             print(f"👋 Hello, {builder_name}!")
         
         print(f"🏢 You are assigned to: {team_name}")
-        print(f"🎯 Team Focus: {team_info['focus']}")
-        print(f"⚡ Team Capacity: {team_info['capacity']}")
+        print(f" Team Focus: {team_info['focus']}")
+        print(f" Team Capacity: {team_info['capacity']}")
         print(f"📋 Total Tasks Assigned: {len(tasks)}")
         
         # Calculate total hours
@@ -99,7 +99,7 @@ class BuilderSetup:
         low_priority = [t for t in tasks if t["priority"] == "Low"]
         
         for priority, task_list, emoji in [
-            ("HIGH PRIORITY", high_priority, "🔴"),
+            ("HIGH PRIORITY", high_priority, ""),
             ("MEDIUM PRIORITY", medium_priority, "🟡"),
             ("LOW PRIORITY", low_priority, "🟢")
         ]:
@@ -115,7 +115,7 @@ class BuilderSetup:
                     print(f"   🌿 Git Branch: {task['branch']}")
         
         print("\n" + "="*80)
-        print("🚀 GETTING STARTED:")
+        print(" GETTING STARTED:")
         print("="*80)
         print("1. To see detailed task information:")
         print(f"   ./organizer/get_tasks.sh '{team_name}' --detailed")
@@ -127,7 +127,7 @@ class BuilderSetup:
         print("   ./organizer/get_tasks.sh --list-teams")
         
         print("\n" + "="*80)
-        print("💡 NEXT STEPS:")
+        print(" NEXT STEPS:")
         print("="*80)
         print("1. Review your high-priority tasks first")
         print("2. Check task dependencies before starting")
@@ -136,7 +136,7 @@ class BuilderSetup:
         print("5. Write tests and documentation as specified")
         
         print("\n" + "="*80)
-        print("🎯 RECOMMENDED STARTING TASK:")
+        print(" RECOMMENDED STARTING TASK:")
         print("="*80)
         
         # Recommend the first high-priority task with no dependencies
@@ -158,14 +158,14 @@ class BuilderSetup:
     
     def interactive_setup(self):
         """Interactive setup process for builders."""
-        print("🎯 Daydreamer Project - Builder Setup")
+        print(" Daydreamer Project - Builder Setup")
         print("="*50)
         print("\nWelcome! Let's get you set up with your assigned tasks.")
         
         # Check if already configured
         existing_config = self.load_builder_config()
         if existing_config:
-            print(f"\n✅ You're already configured as: {existing_config.get('team_name', 'Unknown')}")
+            print(f"\n You're already configured as: {existing_config.get('team_name', 'Unknown')}")
             if input("Would you like to reconfigure? (y/N): ").lower() != 'y':
                 self.display_welcome(existing_config['team_name'], existing_config.get('builder_name', ''))
                 return
@@ -210,7 +210,7 @@ def main():
         config_file = "organizer/builder_config.json"
         if os.path.exists(config_file):
             os.remove(config_file)
-            print("✅ Builder configuration reset.")
+            print(" Builder configuration reset.")
         return
     
     setup = BuilderSetup()

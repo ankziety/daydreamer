@@ -200,7 +200,7 @@ class DMNMemoryCurator:
         # Convert to content strings
         chunk_contents = [chunk.content for chunk in final_chunks]
         
-        logger.debug(f"🧠 Retrieved {len(chunk_contents)} memory chunks for {mode.value} mode")
+        logger.debug(f" Retrieved {len(chunk_contents)} memory chunks for {mode.value} mode")
         return chunk_contents
     
     async def _semantic_retrieval(self, query: str, weight: float) -> List[MemoryChunk]:
@@ -433,7 +433,7 @@ class DMNMemoryCurator:
         # Clean up consolidation queue
         self.consolidation_queue = self.consolidation_queue[-100:]  # Keep last 100
         
-        logger.info(f"🧠 Consolidated {consolidated_count} memories, created {new_associations} associations")
+        logger.info(f" Consolidated {consolidated_count} memories, created {new_associations} associations")
         
         return {
             "consolidated_count": consolidated_count,
@@ -528,7 +528,7 @@ class DMNMemoryCurator:
             # Keep only the most recent half
             items = list(self.associative_cache.items())
             self.associative_cache = dict(items[-500:])
-            logger.debug("🔄 Refreshed associative cache")
+            logger.debug(" Refreshed associative cache")
     
     def get_memory_patterns(self) -> Dict[str, Any]:
         """Analyze patterns in memory access and consolidation"""
@@ -603,7 +603,7 @@ async def test_dmn_memory_curator():
         intrusive_thoughts=["What about creativity?"]
     )
     
-    print("🧠 Testing DMN Memory Curator...")
+    print(" Testing DMN Memory Curator...")
     
     # Test ACTIVE mode retrieval
     chunks = await curator.retrieve_chunks(context, SystemMode.ACTIVE)
@@ -635,9 +635,9 @@ async def test_dmn_memory_curator():
     
     # Get statistics
     stats = curator.get_stats()
-    print(f"\n📊 Memory curator stats: {stats}")
+    print(f"\n Memory curator stats: {stats}")
     
-    print("✅ DMN Memory Curator test completed")
+    print(" DMN Memory Curator test completed")
 
 
 if __name__ == "__main__":

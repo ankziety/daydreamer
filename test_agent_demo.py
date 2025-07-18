@@ -17,10 +17,10 @@ class DemoAgent(Agent):
     """Simple demo agent for testing"""
     
     async def _on_start(self):
-        print(f"🚀 Demo agent {self.config.agent_id} started")
+        print(f" Demo agent {self.config.agent_id} started")
     
     async def _on_stop(self):
-        print(f"🛑 Demo agent {self.config.agent_id} stopped")
+        print(f" Demo agent {self.config.agent_id} stopped")
     
     async def _on_pause(self):
         print(f"⏸️ Demo agent {self.config.agent_id} paused")
@@ -34,7 +34,7 @@ class DemoAgent(Agent):
 
 async def test_agent_lifecycle():
     """Test the agent lifecycle"""
-    print("🤖 Testing Agent Lifecycle")
+    print(" Testing Agent Lifecycle")
     print("=" * 50)
     
     # Create agent configuration
@@ -47,11 +47,11 @@ async def test_agent_lifecycle():
     
     # Create agent
     agent = DemoAgent(config)
-    print(f"✅ Agent created: {agent.config.agent_id}")
+    print(f" Agent created: {agent.config.agent_id}")
     print(f"   State: {agent.get_state().value}")
     
     # Test start
-    print("\n🚀 Starting agent...")
+    print("\n Starting agent...")
     success = await agent.start()
     print(f"   Start successful: {success}")
     print(f"   State: {agent.get_state().value}")
@@ -75,13 +75,13 @@ async def test_agent_lifecycle():
     print(f"   Event handled: {result}")
     
     # Test stats
-    print("\n📊 Agent statistics:")
+    print("\n Agent statistics:")
     stats = agent.get_stats()
     for key, value in stats.items():
         print(f"   {key}: {value}")
     
     # Test stop
-    print("\n🛑 Stopping agent...")
+    print("\n Stopping agent...")
     success = await agent.stop()
     print(f"   Stop successful: {success}")
     print(f"   State: {agent.get_state().value}")
@@ -90,7 +90,7 @@ async def test_agent_lifecycle():
     print("\n🧹 Testing cleanup...")
     await agent.cleanup()
     
-    print("\n✅ Agent lifecycle test completed!")
+    print("\n Agent lifecycle test completed!")
 
 
 async def test_event_handling():
@@ -139,12 +139,12 @@ async def test_event_handling():
     print(f"   Custom event handled: {result}")
     
     await agent.stop()
-    print("✅ Event handling test completed!")
+    print(" Event handling test completed!")
 
 
 async def test_state_transitions():
     """Test state transition logic"""
-    print("\n🔄 Testing State Transitions")
+    print("\n Testing State Transitions")
     print("=" * 50)
     
     config = AgentConfig(
@@ -187,12 +187,12 @@ async def test_state_transitions():
     result = await agent.stop()
     print(f"   Stop again: {result}")
     
-    print("✅ State transition test completed!")
+    print(" State transition test completed!")
 
 
 async def main():
     """Main test function"""
-    print("🧪 Agent Class Test Suite")
+    print(" Agent Class Test Suite")
     print("=" * 60)
     
     try:
@@ -200,11 +200,11 @@ async def main():
         await test_event_handling()
         await test_state_transitions()
         
-        print("\n🎉 All tests completed successfully!")
-        print("✅ Agent class is working correctly!")
+        print("\n All tests completed successfully!")
+        print(" Agent class is working correctly!")
         
     except Exception as e:
-        print(f"\n❌ Test failed with error: {e}")
+        print(f"\n Test failed with error: {e}")
         import traceback
         traceback.print_exc()
         return 1

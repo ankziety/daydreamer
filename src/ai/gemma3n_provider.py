@@ -70,13 +70,13 @@ class Gemma3NProvider:
             if self.model_name in available_models:
                 self.client = ollama
                 self.is_available = True
-                logger.info(f"✅ Gemma 3N ({self.model_name}) is available")
+                logger.info(f" Gemma 3N ({self.model_name}) is available")
             else:
-                logger.warning(f"⚠️ Model {self.model_name} not found. Available: {available_models}")
+                logger.warning(f" Model {self.model_name} not found. Available: {available_models}")
                 logger.info("To install: ollama pull gemma3n:3b")
                 
         except Exception as e:
-            logger.error(f"❌ Failed to initialize Ollama: {e}")
+            logger.error(f" Failed to initialize Ollama: {e}")
     
     def _get_cache_key(self, request: ModelRequest) -> str:
         """Generate cache key for request"""
@@ -338,14 +338,14 @@ async def test_gemma3n():
     provider = Gemma3NProvider()
     
     if not provider.is_available:
-        print("❌ Gemma 3N not available. Please install: ollama pull gemma3n:3b")
+        print(" Gemma 3N not available. Please install: ollama pull gemma3n:3b")
         return
     
-    print("🧠 Testing Gemma 3N for Daydreamer agents...")
+    print(" Testing Gemma 3N for Daydreamer agents...")
     
     # Test thinking
     thoughts = await provider.think("What is the nature of consciousness?")
-    print(f"\n💭 Thinking: {thoughts}")
+    print(f"\n Thinking: {thoughts}")
     
     # Test reasoning
     reasoning = await provider.reason("How do neural networks simulate biological processes?")
@@ -355,7 +355,7 @@ async def test_gemma3n():
     communication = await provider.communicate("Hello! I'm another AI agent.")
     print(f"\n💬 Communication: {communication}")
     
-    print(f"\n📊 Stats: {provider.get_stats()}")
+    print(f"\n Stats: {provider.get_stats()}")
 
 if __name__ == "__main__":
     # Run test if executed directly

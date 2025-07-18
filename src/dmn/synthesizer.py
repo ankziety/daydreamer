@@ -262,7 +262,7 @@ class Synthesizer:
             if synthesis.synthesis_type == SynthesisType.PATTERN:
                 self._cache_pattern(synthesis)
             
-            logger.debug(f"🧠 Generated {synthesis_type.value} synthesis: {synthesis.output_insight[:50]}...")
+            logger.debug(f" Generated {synthesis_type.value} synthesis: {synthesis.output_insight[:50]}...")
         
         return synthesis
     
@@ -739,7 +739,7 @@ async def test_synthesizer():
         hypothesis="Patterns exist at multiple scales in natural systems"
     )
     
-    print("🧠 Testing Synthesizer...")
+    print(" Testing Synthesizer...")
     
     # Test pattern recognition
     patterns = synthesizer.get_pattern_insights(context.chunks)
@@ -748,12 +748,12 @@ async def test_synthesizer():
     # Test synthesis generation with chain-of-thought
     synthesis = await synthesizer.generate_thoughts(context, chain_of_thought=True)
     if synthesis:
-        print(f"\n💡 Generated synthesis ({synthesis.synthesis_type.value}):")
+        print(f"\n Generated synthesis ({synthesis.synthesis_type.value}):")
         print(f"   Insight: {synthesis.output_insight}")
         print(f"   Confidence: {synthesis.confidence:.2f}")
         print(f"   Novelty: {synthesis.novelty_score:.2f}")
         print(f"   Creativity: {synthesis.creativity_level:.2f}")
-        print(f"\n🧠 Chain of thought:")
+        print(f"\n Chain of thought:")
         print(f"   {synthesis.chain_of_thought}")
     
     # Test synthesis with creativity boost (PARTIAL_WAKE mode)
@@ -766,9 +766,9 @@ async def test_synthesizer():
     
     # Get statistics
     stats = synthesizer.get_stats()
-    print(f"\n📊 Synthesizer stats: {stats}")
+    print(f"\n Synthesizer stats: {stats}")
     
-    print("✅ Synthesizer test completed")
+    print(" Synthesizer test completed")
 
 
 if __name__ == "__main__":

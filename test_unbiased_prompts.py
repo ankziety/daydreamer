@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.ERROR)
 async def demonstrate_unbiased_prompts():
     """Demonstrate unbiased thought generation without template fragments"""
     
-    print("🧠 UNBIASED AI THOUGHT GENERATION TEST")
+    print(" UNBIASED AI THOUGHT GENERATION TEST")
     print("=" * 60)
     print("This demonstrates the removal of 'ad-lib' style prompts")
     print("and replacement with GitHub Copilot-style system prompts.")
@@ -25,20 +25,20 @@ async def demonstrate_unbiased_prompts():
     generator = AIThoughtGenerator(config)
     await generator.initialize()
     
-    print(f"\n🔧 Generator Status: {generator.get_status()}")
+    print(f"\n Generator Status: {generator.get_status()}")
     
     print("\n📝 BEFORE (removed): Template-based ad-libs")
-    print("   ❌ 'What if gravity'")
-    print("   ❌ 'Imagine if'") 
-    print("   ❌ 'An absurd scenario unfolds:'")
-    print("   ❌ 'A worrying thought emerges:'")
+    print("    'What if gravity'")
+    print("    'Imagine if'") 
+    print("    'An absurd scenario unfolds:'")
+    print("    'A worrying thought emerges:'")
     
-    print("\n✅ AFTER: Unbiased system prompts")
-    print("   ✓ 'You are generating [context] thoughts that naturally occur...'")
-    print("   ✓ 'Generate a single, spontaneous thought...'")
-    print("   ✓ 'Do not use template phrases or leading words'")
+    print("\n AFTER: Unbiased system prompts")
+    print("    'You are generating [context] thoughts that naturally occur...'")
+    print("    'Generate a single, spontaneous thought...'")
+    print("    'Do not use template phrases or leading words'")
     
-    print("\n🎯 System Prompt Examples:")
+    print("\n System Prompt Examples:")
     print("-" * 40)
     
     contexts_to_show = [ThoughtContext.RANDOM, ThoughtContext.ABSURD, ThoughtContext.PHILOSOPHICAL]
@@ -50,7 +50,7 @@ async def demonstrate_unbiased_prompts():
         print(f"\n{context.value.upper()}:")
         print(f"  {first_sentence}")
     
-    print("\n🧪 Testing Unbiased Generation:")
+    print("\n Testing Unbiased Generation:")
     print("-" * 40)
     
     # Generate sample thoughts (will use fallback but demonstrate the approach)
