@@ -64,56 +64,23 @@ class AIThoughtGenerator:
         self.generator = None
         self.is_initialized = False
         
-        # Prompt templates for different thought contexts
-        self.thought_prompts = {
-            ThoughtContext.INTRUSIVE: [
-                "A sudden, unexpected thought enters the mind:",
-                "Out of nowhere, this thought appears:",
-                "An intrusive thought interrupts:",
-                "Randomly thinking about:",
-            ],
-            ThoughtContext.RANDOM: [
-                "A completely random thought:",
-                "What if",
-                "I wonder about",
-                "Strange thought:",
-            ],
-            ThoughtContext.CREATIVE: [
-                "A creative idea suddenly emerges:",
-                "An artistic inspiration:",
-                "A new creative possibility:",
-                "Imagine creating",
-            ],
-            ThoughtContext.PHILOSOPHICAL: [
-                "A deep philosophical question arises:",
-                "Contemplating the nature of",
-                "What does it mean to",
-                "The meaning of",
-            ],
-            ThoughtContext.WORRY: [
-                "A worrying thought emerges:",
-                "What if something goes wrong with",
-                "Anxiety about",
-                "Concerned that",
-            ],
-            ThoughtContext.MEMORY: [
-                "A memory suddenly surfaces:",
-                "Remembering when",
-                "A flashback to",
-                "Nostalgic thought about",
-            ],
-            ThoughtContext.SENSORY: [
-                "Imagining the sensation of",
-                "The feeling of",
-                "Visualizing",
-                "The taste of",
-            ],
-            ThoughtContext.ABSURD: [
-                "An absurd scenario unfolds:",
-                "What if gravity",
-                "In a world where",
-                "Imagine if",
-            ]
+        # System prompts for unbiased thought generation (no leading content)
+        self.system_prompts = {
+            ThoughtContext.INTRUSIVE: """You are generating intrusive thoughts that naturally occur in a human Default Mode Network. Generate a single, spontaneous thought that would suddenly pop into someone's mind uninvited. The thought should be natural, brief (1-2 sentences), and feel like it came from nowhere. Do not use template phrases or leading words. Just generate the complete thought.""",
+            
+            ThoughtContext.RANDOM: """You are generating random thoughts that spontaneously arise in human consciousness. Generate a single, completely random thought that would naturally occur to someone. The thought should be natural, brief (1-2 sentences), and feel spontaneous. Do not use template phrases or leading words. Just generate the complete thought.""",
+            
+            ThoughtContext.CREATIVE: """You are generating creative thoughts that naturally emerge in a human Default Mode Network. Generate a single, creative idea or inspiration that would spontaneously occur to someone. The thought should be natural, brief (1-2 sentences), and feel like a genuine creative insight. Do not use template phrases or leading words. Just generate the complete thought.""",
+            
+            ThoughtContext.PHILOSOPHICAL: """You are generating philosophical thoughts that naturally arise in human consciousness. Generate a single, philosophical reflection or question that would spontaneously occur to someone. The thought should be natural, brief (1-2 sentences), and feel like genuine philosophical contemplation. Do not use template phrases or leading words. Just generate the complete thought.""",
+            
+            ThoughtContext.WORRY: """You are generating worry thoughts that naturally occur in a human Default Mode Network. Generate a single, anxious or concerned thought that would spontaneously arise in someone's mind. The thought should be natural, brief (1-2 sentences), and feel like genuine worry. Do not use template phrases or leading words. Just generate the complete thought.""",
+            
+            ThoughtContext.MEMORY: """You are generating memory thoughts that naturally surface in human consciousness. Generate a single thought about a memory or past experience that would spontaneously come to mind. The thought should be natural, brief (1-2 sentences), and feel like genuine recollection. Do not use template phrases or leading words. Just generate the complete thought.""",
+            
+            ThoughtContext.SENSORY: """You are generating sensory thoughts that naturally occur in a human Default Mode Network. Generate a single thought involving sensory experience, imagination, or perception that would spontaneously arise. The thought should be natural, brief (1-2 sentences), and feel genuine. Do not use template phrases or leading words. Just generate the complete thought.""",
+            
+            ThoughtContext.ABSURD: """You are generating absurd thoughts that naturally pop into human consciousness. Generate a single, bizarre or impossible thought that would spontaneously occur to someone. The thought should be natural, brief (1-2 sentences), and feel genuinely absurd or surreal. Do not use template phrases or leading words. Just generate the complete thought."""
         }
     
     async def initialize(self):
@@ -122,6 +89,12 @@ class AIThoughtGenerator:
             return
         
         logger.info("🤖 Initializing AI Thought Generator...")
+        
+        # Skip model loading if fallback is explicitly enabled
+        if self.config.fallback_enabled and self.config.model_type == "fallback":
+            logger.info("⚠️ Using fallback mode only (no model loading)")
+            self.is_initialized = True
+            return
         
         # Try Gemma first if available
         if GEMMA_AVAILABLE and self.config.model_type == "gemma":
@@ -173,45 +146,38 @@ class AIThoughtGenerator:
         if not self.is_initialized:
             await self.initialize()
         
-        # Select base prompt based on context
-        prompts = self.thought_prompts.get(context, self.thought_prompts[ThoughtContext.RANDOM])
-        base_prompt = random.choice(prompts)
+        # Get system prompt for context (no leading fragments)
+        system_prompt = self.system_prompts.get(context, self.system_prompts[ThoughtContext.RANDOM])
         
         # Generate using available model
         try:
             if self.gemma_provider and self.gemma_provider.is_available:
-                return await self._generate_with_gemma(base_prompt, context, intensity, difficulty)
+                return await self._generate_with_gemma(system_prompt, context, intensity, difficulty)
             elif self.generator:
-                return await self._generate_with_gpt2(base_prompt, context, intensity, difficulty)
+                return await self._generate_with_gpt2(system_prompt, context, intensity, difficulty)
             else:
-                return await self._generate_fallback(base_prompt, context, intensity, difficulty)
+                return await self._generate_fallback(system_prompt, context, intensity, difficulty)
         except Exception as e:
             logger.error(f"Error generating thought: {e}")
-            return await self._generate_fallback(base_prompt, context, intensity, difficulty)
+            return await self._generate_fallback(system_prompt, context, intensity, difficulty)
     
-    async def _generate_with_gemma(self, base_prompt: str, context: ThoughtContext, 
+    async def _generate_with_gemma(self, system_prompt: str, context: ThoughtContext, 
                                  intensity: int, difficulty: int) -> str:
-        """Generate thought using Gemma model"""
-        system_message = f"""You are generating {context.value} thoughts for a Default Mode Network simulation.
+        """Generate thought using Gemma model with unbiased system prompt"""
+        # Enhanced system message with intensity/difficulty context
+        enhanced_system = f"""{system_prompt}
 
-Generate a single, natural thought that would spontaneously occur in someone's mind.
+Context: Intensity level {intensity}/10 (how disruptive the thought is)
+Difficulty level {difficulty}/10 (how hard it is to dismiss)
 
-Intensity level: {intensity}/10 (how disruptive)
-Difficulty level: {difficulty}/10 (how hard to dismiss)
+Generate only the thought content - no prefixes, explanations, or meta-commentary."""
 
-The thought should be:
-- Natural and human-like
-- Brief (1-2 sentences max)  
-- Appropriate to the {context.value} category
-- NOT template-based or formulaic
-
-Just output the thought itself, nothing else."""
-
-        prompt = f"{base_prompt}"
+        # Use minimal prompt to avoid bias
+        prompt = "Generate a thought:"
         
         request = ModelRequest(
             prompt=prompt,
-            system_message=system_message,
+            system_message=enhanced_system,
             temperature=self.config.temperature,
             max_tokens=self.config.max_tokens,
             top_p=self.config.top_p
@@ -225,26 +191,31 @@ Just output the thought itself, nothing else."""
         thought = response.content.strip()
         return self._clean_thought(thought)
     
-    async def _generate_with_gpt2(self, base_prompt: str, context: ThoughtContext,
+    async def _generate_with_gpt2(self, system_prompt: str, context: ThoughtContext,
                                 intensity: int, difficulty: int) -> str:
-        """Generate thought using GPT-2 model"""
-        # Adjust prompt based on intensity and context
-        full_prompt = base_prompt
+        """Generate thought using GPT-2 model with unbiased approach"""
+        # Use context-aware but unbiased prompts for GPT-2
+        context_prompts = {
+            ThoughtContext.INTRUSIVE: "A sudden thought:",
+            ThoughtContext.RANDOM: "Random thought:",
+            ThoughtContext.CREATIVE: "Creative idea:",
+            ThoughtContext.PHILOSOPHICAL: "Deep thought:",
+            ThoughtContext.WORRY: "Worried thought:",
+            ThoughtContext.MEMORY: "Memory:",
+            ThoughtContext.SENSORY: "Sensory thought:",
+            ThoughtContext.ABSURD: "Strange thought:"
+        }
         
-        if context == ThoughtContext.ABSURD:
-            full_prompt += " something impossible"
-        elif context == ThoughtContext.WORRY:
-            full_prompt += " what could go wrong"
-        elif context == ThoughtContext.CREATIVE:
-            full_prompt += " a new creative idea"
+        # Minimal prompt without leading content
+        prompt = context_prompts.get(context, "Thought:")
         
         # Generate in async context
         loop = asyncio.get_event_loop()
         result = await loop.run_in_executor(
             None,
             lambda: self.generator(
-                full_prompt,
-                max_length=len(full_prompt.split()) + self.config.max_tokens // 4,
+                prompt,
+                max_length=len(prompt.split()) + self.config.max_tokens // 4,
                 temperature=self.config.temperature,
                 top_p=self.config.top_p,
                 do_sample=True,
@@ -255,15 +226,15 @@ Just output the thought itself, nothing else."""
         
         generated_text = result[0]['generated_text']
         # Extract just the new part
-        thought = generated_text[len(full_prompt):].strip()
+        thought = generated_text[len(prompt):].strip()
         return self._clean_thought(thought)
     
-    async def _generate_fallback(self, base_prompt: str, context: ThoughtContext,
+    async def _generate_fallback(self, system_prompt: str, context: ThoughtContext,
                                intensity: int, difficulty: int) -> str:
         """Minimal fallback when no models are available"""
         simple_thoughts = {
             ThoughtContext.INTRUSIVE: "A sudden thought about something unexpected",
-            ThoughtContext.RANDOM: "A random idea pops into mind",
+            ThoughtContext.RANDOM: "A random idea pops into mind", 
             ThoughtContext.CREATIVE: "An artistic idea emerges",
             ThoughtContext.PHILOSOPHICAL: "A deep question about existence",
             ThoughtContext.WORRY: "A concern about the future",
