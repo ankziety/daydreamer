@@ -40,7 +40,11 @@ class DaydreamerAI:
             memory_db_path: Path to persistent memory database
             model_config: Model configuration dictionary
         """
+        self.verbose = model_config.get('verbose', False) if model_config else False
+        
         print("🧠 Initializing Daydreamer AI System...")
+        if self.verbose:
+            print("   🔍 Verbose mode enabled - detailed processing will be shown")
         print("=" * 60)
         
         # Generate session ID
@@ -50,8 +54,8 @@ class DaydreamerAI:
         # Initialize components
         self.memory_manager = PersistentMemoryManager(memory_db_path)
         self.model_manager = create_model_manager(model_config or {})
-        self.cot_processor = ChainOfThoughtProcessor(self.model_manager)
-        self.daydream_engine = DaydreamingEngine(self.model_manager, self.memory_manager)
+        self.cot_processor = ChainOfThoughtProcessor(self.model_manager, verbose=self.verbose)
+        self.daydream_engine = DaydreamingEngine(self.model_manager, self.memory_manager, verbose=self.verbose)
         self.prompts = DaydreamerPrompts()
         
         # System state
@@ -105,15 +109,24 @@ class DaydreamerAI:
         Returns:
             AI response
         """
-        print(f"\n{'='*15} PROCESSING USER INPUT {'='*15}")
+        if self.verbose:
+            print(f"\n{'='*20} VERBOSE PROCESSING MODE {'='*20}")
+        else:
+            print(f"\n{'='*15} PROCESSING USER INPUT {'='*15}")
         start_time = time.time()
         
         # Get conversation context
         context = get_conversation_context(self.memory_manager, self.session_id)
         print(f"📖 Retrieved context: {len(context)} characters")
         
+        if self.verbose and context:
+            print(f"   📄 CONTEXT PREVIEW: {context[:200]}..." if len(context) > 200 else f"   📄 CONTEXT: {context}")
+        
         # Step 1: Chain of Thought Analysis
         print(f"\n🧠 Starting Chain of Thought analysis...")
+        if self.verbose:
+            print(f"   ⚙️  Configuration: max_steps={self.cot_processor.max_thinking_steps}, confidence_threshold={self.cot_processor.confidence_threshold}")
+        
         cot_result = await self.cot_processor.process_chain_of_thought(
             user_input, 
             context,
@@ -123,11 +136,24 @@ class DaydreamerAI:
         self.total_thinking_time += cot_result.total_thinking_time
         print(f"✅ Chain of Thought complete: {len(cot_result.thinking_steps)} steps, {cot_result.total_thinking_time:.1f}s")
         
+        if self.verbose:
+            print(f"   📋 COT SUMMARY:")
+            for i, step in enumerate(cot_result.thinking_steps, 1):
+                print(f"      Step {i}: {step.focus} (confidence: {step.confidence:.2f})")
+        
         # Step 2: Check if we should trigger daydreaming
         daydream_result = None
         full_context = f"{context}\n{user_input}" if context else user_input
         
-        if await self.daydream_engine.should_daydream(full_context):
+        should_daydream = await self.daydream_engine.should_daydream(full_context)
+        if self.verbose:
+            print(f"\n🌙 Daydream Decision: {'YES' if should_daydream else 'NO'}")
+            print(f"   🎲 Base frequency: {self.daydream_engine.daydream_frequency}")
+            creative_words = ['creative', 'imagination', 'idea', 'inspiration', 'novel']
+            has_creative = any(word in user_input.lower() for word in creative_words)
+            print(f"   🎨 Creative context detected: {has_creative}")
+        
+        if should_daydream:
             print(f"\n🌙 Triggering Day Dreaming session...")
             daydream_result = await self.daydream_engine.trigger_daydream_session(
                 full_context,
@@ -136,6 +162,12 @@ class DaydreamerAI:
             )
             self.total_daydream_time += daydream_result.total_time
             print(f"✅ Day Dreaming complete: {len(daydream_result.insights)} insights, {daydream_result.total_time:.1f}s")
+            
+            if self.verbose and daydream_result.insights:
+                print(f"   🌟 INSIGHTS GENERATED:")
+                for i, insight in enumerate(daydream_result.insights, 1):
+                    total_score = insight.creativity_score + insight.relevance_score
+                    print(f"      {i}. {insight.seed.knowledge_domain}: {total_score:.2f} (C:{insight.creativity_score:.2f} R:{insight.relevance_score:.2f})")
         
         # Step 3: Retrieve relevant memories
         print(f"\n💭 Retrieving relevant memories...")
@@ -147,11 +179,23 @@ class DaydreamerAI:
                 memory_parts.append(f"- {memory.user_input[:100]}...")
             memory_context = "\n".join(memory_parts)
             print(f"   Found {len(relevant_memories)} relevant memories")
+            
+            if self.verbose:
+                print(f"   💾 MEMORY MATCHES:")
+                for i, memory in enumerate(relevant_memories, 1):
+                    print(f"      {i}. {memory.timestamp.strftime('%Y-%m-%d')}: {memory.user_input[:80]}...")
         else:
             print("   No relevant memories found")
         
         # Step 4: Generate final response
         print(f"\n🎯 Generating final response...")
+        if self.verbose:
+            print(f"   🧩 RESPONSE COMPONENTS:")
+            print(f"      CoT conclusions: {len(cot_result.final_conclusions)} chars")
+            if daydream_result and daydream_result.best_insight:
+                print(f"      Best insight: {daydream_result.best_insight.seed.knowledge_domain}")
+            print(f"      Memory context: {len(memory_context)} chars")
+        
         response = await self._generate_final_response(
             user_input, context, cot_result, daydream_result, memory_context
         )
@@ -159,6 +203,11 @@ class DaydreamerAI:
         # Step 5: Store conversation in memory
         importance = self._calculate_importance(user_input, response, cot_result, daydream_result)
         tags = self._extract_tags(user_input, response)
+        
+        if self.verbose:
+            print(f"\n💾 MEMORY STORAGE:")
+            print(f"   📊 Importance score: {importance:.2f}")
+            print(f"   🏷️  Tags: {', '.join(tags)}")
         
         cot_summary = cot_result.final_conclusions if cot_result else None
         daydream_summary = daydream_result.best_insight.insight if daydream_result and daydream_result.best_insight else None
@@ -205,6 +254,8 @@ class DaydreamerAI:
         print(f"\n📊 Processing complete: {total_time:.1f}s total")
         print(f"   Memory stored: {memory_id}")
         print(f"   Importance: {importance:.2f}")
+        if self.verbose:
+            print(f"   🔍 Verbose mode enabled - detailed logs shown above")
         print(f"=" * 50)
         
         return response

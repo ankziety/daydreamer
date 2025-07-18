@@ -59,7 +59,8 @@ class ChainOfThoughtProcessor:
                  max_thinking_steps: int = 10,
                  max_context_tokens: int = 2000,
                  confidence_threshold: float = 0.8,
-                 thinking_timeout: float = 30.0):
+                 thinking_timeout: float = 30.0,
+                 verbose: bool = False):
         """
         Initialize chain of thought processor.
         
@@ -69,12 +70,14 @@ class ChainOfThoughtProcessor:
             max_context_tokens: Context limit before summarization
             confidence_threshold: Confidence needed before stopping
             thinking_timeout: Maximum time to spend thinking
+            verbose: Enable verbose logging of prompts and responses
         """
         self.model_client = model_client
         self.max_thinking_steps = max_thinking_steps
         self.max_context_tokens = max_context_tokens
         self.confidence_threshold = confidence_threshold
         self.thinking_timeout = thinking_timeout
+        self.verbose = verbose
         self.prompts = DaydreamerPrompts()
     
     async def process_chain_of_thought(self, 
@@ -172,9 +175,21 @@ class ChainOfThoughtProcessor:
                                            user_input=user_input, 
                                            context=context)
         
+        if self.verbose:
+            print(f"   📝 INITIAL ANALYSIS PROMPT:")
+            print(f"      {prompt[:200]}..." if len(prompt) > 200 else f"      {prompt}")
+        
         response = await self._query_model(prompt)
+        
+        if self.verbose:
+            print(f"   🤖 MODEL RESPONSE:")
+            print(f"      {response[:300]}..." if len(response) > 300 else f"      {response}")
+        
         confidence = self._extract_confidence(response)
         ready_to_respond = self._check_ready_to_respond(response)
+        
+        if self.verbose:
+            print(f"   📊 ANALYSIS: confidence={confidence:.2f}, ready={ready_to_respond}")
         
         return ThinkingStep(
             step_number=1,
@@ -196,13 +211,32 @@ class ChainOfThoughtProcessor:
         previous_thoughts = self._build_thinking_context(thinking_steps)
         current_focus = current_step.specific_focus or "deeper analysis"
         
+        if self.verbose:
+            print(f"   🎯 ATTENTION FOCUS: {current_focus}")
+            print(f"   🧠 CONTEXT: {len(previous_thoughts)} chars from {len(thinking_steps)} previous steps")
+        
         prompt = self.prompts.format_prompt("cot_continuation",
                                           previous_thoughts=previous_thoughts,
                                           current_focus=current_focus)
         
+        if self.verbose:
+            print(f"   📝 CONTINUATION PROMPT:")
+            print(f"      {prompt[:200]}..." if len(prompt) > 200 else f"      {prompt}")
+        
         response = await self._query_model(prompt)
+        
+        if self.verbose:
+            print(f"   🤖 MODEL RESPONSE:")
+            print(f"      {response[:300]}..." if len(response) > 300 else f"      {response}")
+        
         confidence = self._extract_confidence(response)
         ready_to_respond = self._check_ready_to_respond(response)
+        next_focus = self._extract_next_focus(response) if not ready_to_respond else None
+        
+        if self.verbose:
+            print(f"   📊 ANALYSIS: confidence={confidence:.2f}, ready={ready_to_respond}")
+            if next_focus:
+                print(f"   ➡️  NEXT FOCUS: {next_focus}")
         
         return ThinkingStep(
             step_number=current_step.step_number + 1,
@@ -212,7 +246,7 @@ class ChainOfThoughtProcessor:
             timestamp=datetime.now(),
             ready_to_respond=ready_to_respond,
             needs_more_thinking=not ready_to_respond,
-            specific_focus=self._extract_next_focus(response) if not ready_to_respond else None
+            specific_focus=next_focus
         )
     
     async def _summarize_thinking(self, thinking_steps: List[ThinkingStep]) -> str:
@@ -222,10 +256,29 @@ class ChainOfThoughtProcessor:
             for step in thinking_steps
         ])
         
+        if self.verbose:
+            total_chars = len(accumulated_thoughts)
+            estimated_tokens = total_chars // 4
+            print(f"   ✂️  TRUNCATION TRIGGERED:")
+            print(f"      Current context: {total_chars} chars (~{estimated_tokens} tokens)")
+            print(f"      Limit: {self.max_context_tokens} tokens")
+            print(f"      Summarizing {len(thinking_steps)} thinking steps...")
+        
         prompt = self.prompts.format_prompt("cot_summarization",
                                           accumulated_thoughts=accumulated_thoughts)
         
-        return await self._query_model(prompt)
+        if self.verbose:
+            print(f"   📝 SUMMARIZATION PROMPT:")
+            print(f"      {prompt[:200]}..." if len(prompt) > 200 else f"      {prompt}")
+        
+        summary = await self._query_model(prompt)
+        
+        if self.verbose:
+            print(f"   📋 SUMMARY RESULT:")
+            print(f"      {summary[:200]}..." if len(summary) > 200 else f"      {summary}")
+            print(f"   📉 Context reduced from {len(accumulated_thoughts)} to {len(summary)} chars")
+        
+        return summary
     
     async def _generate_conclusions(self, thinking_steps: List[ThinkingStep]) -> str:
         """Generate final conclusions from all thinking steps"""
@@ -377,7 +430,8 @@ class ChainOfThoughtProcessor:
 async def think_through(user_input: str, 
                        model_client: Any, 
                        context: str = "",
-                       progress_callback: Optional[Callable] = None) -> ChainOfThoughtResult:
+                       progress_callback: Optional[Callable] = None,
+                       verbose: bool = False) -> ChainOfThoughtResult:
     """
     Convenience function to process user input through chain of thought.
     
@@ -386,9 +440,10 @@ async def think_through(user_input: str,
         model_client: AI model client
         context: Previous conversation context
         progress_callback: Optional callback for progress updates
+        verbose: Enable verbose logging
         
     Returns:
         Complete chain of thought result
     """
-    processor = ChainOfThoughtProcessor(model_client)
+    processor = ChainOfThoughtProcessor(model_client, verbose=verbose)
     return await processor.process_chain_of_thought(user_input, context, progress_callback)

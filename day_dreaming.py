@@ -67,7 +67,8 @@ class DaydreamingEngine:
                  creativity_threshold: float = 0.6,
                  relevance_threshold: float = 0.4,
                  daydream_frequency: float = 0.3,
-                 max_insights_per_session: int = 3):
+                 max_insights_per_session: int = 3,
+                 verbose: bool = False):
         """
         Initialize daydreaming engine.
         
@@ -78,6 +79,7 @@ class DaydreamingEngine:
             relevance_threshold: Minimum relevance for integration
             daydream_frequency: Probability of triggering daydreams
             max_insights_per_session: Maximum insights per daydream session
+            verbose: Enable verbose logging of daydream process
         """
         self.model_client = model_client
         self.memory_store = memory_store
@@ -85,6 +87,7 @@ class DaydreamingEngine:
         self.relevance_threshold = relevance_threshold
         self.daydream_frequency = daydream_frequency
         self.max_insights_per_session = max_insights_per_session
+        self.verbose = verbose
         self.prompts = DaydreamerPrompts()
         
         # Track daydream history
@@ -205,6 +208,11 @@ class DaydreamingEngine:
         # Select a random knowledge domain
         available_domains = self.prompts.get_knowledge_domains()
         
+        if self.verbose:
+            print(f"   🎲 DOMAIN SELECTION:")
+            print(f"      Available domains: {', '.join(available_domains)}")
+            print(f"      Usage history: {dict(list(self.knowledge_domains_used.items())[:5])}")
+        
         # Prefer less recently used domains for diversity
         domain_weights = []
         for domain in available_domains:
@@ -216,8 +224,16 @@ class DaydreamingEngine:
         knowledge_domain = random.choices(available_domains, weights=domain_weights)[0]
         self.knowledge_domains_used[knowledge_domain] = self.knowledge_domains_used.get(knowledge_domain, 0) + 1
         
+        if self.verbose:
+            selected_weight = domain_weights[available_domains.index(knowledge_domain)]
+            print(f"   ✅ SELECTED DOMAIN: {knowledge_domain} (weight: {selected_weight:.2f})")
+        
         # Get a random memory
         random_memory = await self._get_random_memory()
+        
+        if self.verbose:
+            memory_preview = random_memory[:100] + "..." if random_memory and len(random_memory) > 100 else random_memory or "None"
+            print(f"   💭 RANDOM MEMORY: {memory_preview}")
         
         return DaydreamSeed(
             context=context,
@@ -268,8 +284,16 @@ class DaydreamingEngine:
                                            random_memory=seed.random_memory or "No specific memory",
                                            knowledge_domain=seed.knowledge_domain)
         
+        if self.verbose:
+            print(f"   📝 DAYDREAM PROMPT ({seed.knowledge_domain}):")
+            print(f"      {prompt[:200]}..." if len(prompt) > 200 else f"      {prompt}")
+        
         # Generate the creative insight
         response = await self._query_model(prompt)
+        
+        if self.verbose:
+            print(f"   🌟 INSIGHT GENERATED:")
+            print(f"      {response[:300]}..." if len(response) > 300 else f"      {response}")
         
         # Extract components from the response
         connections = self._extract_connections(response)
@@ -277,6 +301,13 @@ class DaydreamingEngine:
         relevance_score = self._evaluate_relevance(response, seed.context)
         
         processing_time = time.time() - start_time
+        
+        if self.verbose:
+            print(f"   📊 INSIGHT EVALUATION:")
+            print(f"      Creativity: {creativity_score:.2f}, Relevance: {relevance_score:.2f}")
+            print(f"      Connections found: {len(connections)}")
+            if connections:
+                print(f"      Top connection: {connections[0][:100]}...")
         
         return DaydreamInsight(
             seed=seed,
@@ -458,7 +489,8 @@ class DaydreamingEngine:
 async def generate_daydream(context: str, 
                           model_client: Any,
                           memory_store: Optional[Any] = None,
-                          progress_callback: Optional[Callable] = None) -> DaydreamSession:
+                          progress_callback: Optional[Callable] = None,
+                          verbose: bool = False) -> DaydreamSession:
     """
     Convenience function to generate a daydream session.
     
@@ -467,11 +499,12 @@ async def generate_daydream(context: str,
         model_client: AI model client
         memory_store: Optional memory store
         progress_callback: Optional progress callback
+        verbose: Enable verbose logging
         
     Returns:
         Complete daydream session
     """
-    engine = DaydreamingEngine(model_client, memory_store)
+    engine = DaydreamingEngine(model_client, memory_store, verbose=verbose)
     return await engine.trigger_daydream_session(context, "manual_trigger", progress_callback)
 
 

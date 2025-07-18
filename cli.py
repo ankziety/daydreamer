@@ -24,12 +24,15 @@ Examples:
   python cli.py                    # Start interactive chat
   python cli.py --memory custom.db # Use custom memory database
   python cli.py --model ollama     # Force use of Ollama (if available)
+  python cli.py --verbose          # Show detailed processing and prompts
+  python cli.py -v --test          # Run test with verbose output
   
 The Daydreamer AI system features:
 - True Chain of Thought reasoning through recursive self-prompting
 - Day Dreaming technique for creative insights
 - Persistent memory across sessions
 - Automatic fallback from Ollama to Transformers
+- Verbose mode to see actual prompts and decision-making process
         """
     )
     
@@ -79,13 +82,20 @@ The Daydreamer AI system features:
         help='Clean up old memories and exit'
     )
     
+    parser.add_argument(
+        '--verbose', '-v',
+        action='store_true',
+        help='Enable verbose mode to show detailed processing messages and prompts'
+    )
+    
     args = parser.parse_args()
     
     # Build model configuration
     model_config = {
         'model_preference': args.model,
         'ollama_model': args.ollama_model,
-        'transformers_model': args.transformers_model
+        'transformers_model': args.transformers_model,
+        'verbose': args.verbose
     }
     
     try:
