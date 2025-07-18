@@ -24,6 +24,8 @@ import threading
 import time
 import json
 import platform
+import configparser
+import subprocess
 from datetime import datetime
 from typing import List, Dict, Optional, Any, Tuple
 from dataclasses import dataclass
@@ -130,6 +132,7 @@ class ResearchChat:
         self.is_running = False
         
         # Initialize system components
+        self._load_configuration()
         self._initialize_system_info()
         self._initialize_ai_models()
         self._initialize_memory_system()
@@ -140,6 +143,106 @@ class ResearchChat:
         print("SYSTEM READY FOR RESEARCH CONVERSATIONS")
         print("=" * 80)
         
+    def _load_configuration(self):
+        """Load configuration from research_config.ini"""
+        print("\n--- CONFIGURATION LOADING ---")
+        
+        self.config = configparser.ConfigParser()
+        config_file = "research_config.ini"
+        
+        # Load default configuration
+        self.ollama_model = "gemma3n:3b"  # Default
+        self.ollama_host = "localhost:11434"
+        self.auto_detect_model = False
+        
+        try:
+            self.config.read(config_file)
+            if 'ai_models' in self.config:
+                configured_model = self.config.get('ai_models', 'ollama_model', fallback='gemma3n:3b')
+                if configured_model.lower() == 'auto':
+                    self.auto_detect_model = True
+                    self.ollama_model = "gemma3n:3b"  # fallback if auto-detection fails
+                else:
+                    self.ollama_model = configured_model
+                
+                self.ollama_host = self.config.get('ai_models', 'ollama_host', fallback='localhost:11434')
+                # Override model preference from config if not explicitly set
+                if self.model_preference == "auto":
+                    self.model_preference = self.config.get('ai_models', 'model_preference', fallback='auto')
+            
+            print(f"✅ Configuration loaded from {config_file}")
+            if self.auto_detect_model:
+                print(f"   Auto-detect mode enabled")
+            else:
+                print(f"   Preferred Ollama model: {self.ollama_model}")
+            print(f"   Model preference: {self.model_preference}")
+        except Exception as e:
+            print(f"⚠️ Could not load configuration: {e}")
+            print("   Using default settings")
+    
+    def _detect_available_ollama_models(self):
+        """Detect available Ollama models"""
+        available_models = []
+        if not OLLAMA_AVAILABLE:
+            return available_models
+        
+        try:
+            result = subprocess.run(['ollama', 'list'], capture_output=True, text=True, timeout=10)
+            if result.returncode == 0:
+                lines = result.stdout.split('\n')
+                for line in lines[1:]:  # Skip header
+                    if line.strip():
+                        parts = line.split()
+                        if len(parts) >= 1:
+                            model_name = parts[0]
+                            available_models.append(model_name)
+        except Exception as e:
+            print(f"⚠️ Could not detect Ollama models: {e}")
+        
+        return available_models
+    
+    def _get_best_available_model(self, available_models):
+        """Determine the best available model based on preferences"""
+        if not available_models:
+            return self.ollama_model  # Return configured default
+        
+        # If auto-detection is disabled, check if the configured model is available
+        if not self.auto_detect_model:
+            if self.ollama_model in available_models:
+                return self.ollama_model
+            else:
+                print(f"⚠️ Configured model '{self.ollama_model}' not available, auto-selecting...")
+        
+        # Priority order for model selection (including the user's gemma3n:e4b)
+        model_preferences = [
+            'gemma3n:e4b',      # High-end variant (user's specific request)
+            'gemma3n:latest',   # Latest version
+            'gemma3n:8b',       # Larger model
+            'gemma3n:3b',       # Standard model
+            'gemma3n',          # Any gemma3n
+            'gemma:7b',         # Gemma family
+            'gemma:latest',
+            'llama3.2:latest',  # Llama family
+            'llama3.2:8b',
+            'llama3.2:3b',
+            'llama3.2',
+            'phi3:latest',      # Phi family
+            'phi3:mini',
+            'phi3'
+        ]
+        
+        # Find the best match
+        for preferred in model_preferences:
+            for available in available_models:
+                if available == preferred:
+                    return available
+                # Partial match for base model names
+                if ':' not in preferred and available.startswith(preferred + ':'):
+                    return available
+        
+        # If no preferred match, return the first available
+        return available_models[0] if available_models else self.ollama_model
+
     def _initialize_system_info(self):
         """Initialize and display system information for research transparency"""
         print("\n--- SYSTEM INFORMATION ---")
@@ -181,9 +284,21 @@ class ResearchChat:
         if (self.model_preference in ["ollama", "auto"] and 
             OLLAMA_AVAILABLE and DAYDREAMER_COMPONENTS_AVAILABLE):
             try:
-                self.primary_model = Gemma3NProvider()
-                self.system_info.primary_model = "Gemma3N via Ollama"
-                print(f"✅ Primary Model: {self.system_info.primary_model}")
+                # Detect available models
+                available_models = self._detect_available_ollama_models()
+                if available_models:
+                    selected_model = self._get_best_available_model(available_models)
+                    print(f"📋 Available Ollama models: {', '.join(available_models)}")
+                    print(f"🎯 Selected model: {selected_model}")
+                    
+                    self.primary_model = Gemma3NProvider(model_name=selected_model)
+                    self.system_info.primary_model = f"{selected_model} via Ollama"
+                    print(f"✅ Primary Model: {self.system_info.primary_model}")
+                else:
+                    print("⚠️ No Ollama models detected, trying default configuration")
+                    self.primary_model = Gemma3NProvider(model_name=self.ollama_model)
+                    self.system_info.primary_model = f"{self.ollama_model} via Ollama"
+                    print(f"✅ Primary Model: {self.system_info.primary_model}")
             except Exception as e:
                 print(f"⚠️ Ollama initialization failed: {e}")
         

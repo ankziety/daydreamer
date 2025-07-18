@@ -42,26 +42,80 @@ def check_ollama_service():
         return False, str(e)
 
 def check_models(model_list):
-    """Check if required models are available"""
+    """Check available models and show compatibility"""
     recommended_models = ['gemma3n:3b', 'llama3.2:3b', 'phi3:mini']
     available_models = []
     
-    print("\nChecking available models...")
+    print("\nAvailable models:")
     lines = model_list.split('\n')
     for line in lines[1:]:  # Skip header
         if line.strip():
-            model_name = line.split()[0]
-            available_models.append(model_name)
-            print(f"  📦 {model_name}")
+            parts = line.split()
+            if len(parts) >= 3:
+                model_name = parts[0]
+                model_id = parts[1]
+                model_size = parts[2]
+                available_models.append(model_name)
+                print(f"  📦 {model_name} (ID: {model_id[:12]}..., Size: {model_size})")
     
-    print(f"\nRecommended models for research:")
-    for model in recommended_models:
-        if any(model.startswith(available.split(':')[0]) for available in available_models):
-            print(f"  ✅ {model} (or compatible version available)")
-        else:
-            print(f"  ❌ {model} (not available)")
+    if available_models:
+        print(f"\nModel compatibility analysis:")
+        gemma_models = [m for m in available_models if m.startswith('gemma')]
+        llama_models = [m for m in available_models if m.startswith('llama')]
+        phi_models = [m for m in available_models if m.startswith('phi')]
+        
+        if gemma_models:
+            print(f"  ✅ Gemma models: {', '.join(gemma_models)}")
+        if llama_models:
+            print(f"  ✅ Llama models: {', '.join(llama_models)}")
+        if phi_models:
+            print(f"  ✅ Phi models: {', '.join(phi_models)}")
+        
+        print(f"\nRecommended models for research:")
+        for model in recommended_models:
+            base_name = model.split(':')[0]
+            compatible = [m for m in available_models if m.startswith(base_name)]
+            if compatible:
+                print(f"  ✅ {model} (available: {', '.join(compatible)})")
+            else:
+                print(f"  ❌ {model} (not available)")
     
     return available_models
+
+def get_best_available_model(available_models):
+    """Determine the best available model based on preferences"""
+    if not available_models:
+        return None
+    
+    # Priority order for model selection
+    model_preferences = [
+        'gemma3n:e4b',      # High-end variant
+        'gemma3n:latest',   # Latest version
+        'gemma3n:8b',       # Larger model
+        'gemma3n:3b',       # Standard model
+        'gemma3n',          # Any gemma3n
+        'gemma:7b',         # Gemma family
+        'gemma:latest',
+        'llama3.2:latest',  # Llama family
+        'llama3.2:8b',
+        'llama3.2:3b',
+        'llama3.2',
+        'phi3:latest',      # Phi family
+        'phi3:mini',
+        'phi3'
+    ]
+    
+    # Find the best match
+    for preferred in model_preferences:
+        for available in available_models:
+            if available == preferred or (preferred.endswith(':') and available.startswith(preferred[:-1])):
+                return available
+            # Partial match for base model names
+            if ':' not in preferred and available.startswith(preferred):
+                return available
+    
+    # If no preferred match, return the first available
+    return available_models[0] if available_models else None
 
 def provide_setup_instructions():
     """Provide setup instructions if Ollama is not properly configured"""
@@ -111,13 +165,38 @@ def main():
     available_models = check_models(output)
     
     if available_models:
+        best_model = get_best_available_model(available_models)
         print(f"\n✅ Ollama is ready for research chat!")
         print(f"Found {len(available_models)} available models")
+        print(f"🎯 Recommended model: {best_model}")
     else:
         print(f"\n⚠️ No models found. Install models with:")
         print("   ollama pull gemma3n:3b")
     
     print("\n🔬 You can now run: python research_chat.py")
+
+def get_available_models():
+    """Get list of available Ollama models (for use by other modules)"""
+    try:
+        result = subprocess.run(['ollama', 'list'], capture_output=True, text=True, timeout=10)
+        if result.returncode == 0:
+            available_models = []
+            lines = result.stdout.split('\n')
+            for line in lines[1:]:  # Skip header
+                if line.strip():
+                    parts = line.split()
+                    if len(parts) >= 1:
+                        model_name = parts[0]
+                        available_models.append(model_name)
+            return available_models
+    except Exception:
+        pass
+    return []
+
+def get_recommended_model():
+    """Get the recommended Ollama model for research chat"""
+    available_models = get_available_models()
+    return get_best_available_model(available_models)
 
 if __name__ == "__main__":
     main()
