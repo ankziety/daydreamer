@@ -21,15 +21,28 @@ def main():
     
     # Offer chat options
     print("Choose your chat interface:")
-    print("1. Enhanced Chat (Full DMN system with intrusive thoughts)")
-    print("2. Working Chat (Basic conversational AI)")
-    print("3. Exit")
+    print("1. Research Chat (Full research-grade AI with CoT and daydreaming)")
+    print("2. Enhanced Chat (Full DMN system with intrusive thoughts)")
+    print("3. Working Chat (Basic conversational AI)")
+    print("4. Exit")
     
     while True:
         try:
-            choice = input("\nEnter your choice (1-3): ").strip()
+            choice = input("\nEnter your choice (1-4): ").strip()
             
             if choice == '1':
+                print("\n🔬 Launching Research-Grade Daydreamer Chat...")
+                try:
+                    import research_chat
+                    research_chat.main()
+                except ImportError as e:
+                    print(f"❌ Failed to import research chat: {e}")
+                    print("Falling back to enhanced chat...")
+                    import enhanced_chat
+                    enhanced_chat.main()
+                break
+            
+            elif choice == '2':
                 print("\n🚀 Launching Enhanced Daydreamer Chat...")
                 try:
                     import enhanced_chat
@@ -41,18 +54,18 @@ def main():
                     working_chat.main()
                 break
                 
-            elif choice == '2':
+            elif choice == '3':
                 print("\n🚀 Launching Working Daydreamer Chat...")
                 import working_chat
                 working_chat.main()
                 break
                 
-            elif choice == '3':
+            elif choice == '4':
                 print("👋 Goodbye!")
                 break
                 
             else:
-                print("⚠️  Please enter 1, 2, or 3")
+                print("⚠️  Please enter 1, 2, 3, or 4")
                 
         except KeyboardInterrupt:
             print("\n👋 Goodbye!")
