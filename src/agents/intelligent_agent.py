@@ -70,7 +70,7 @@ class IntelligentAgent:
             "total_ai_calls": 0
         }
         
-        logger.info(f"🤖 Created intelligent agent: {config.agent_id} ({config.personality})")
+        logger.info(f" Created intelligent agent: {config.agent_id} ({config.personality})")
     
     async def start(self):
         """Start the agent and begin autonomous thinking"""
@@ -79,7 +79,7 @@ class IntelligentAgent:
             return
         
         self.state = AgentState.ACTIVE
-        logger.info(f"🚀 Starting agent: {self.config.agent_id}")
+        logger.info(f" Starting agent: {self.config.agent_id}")
         
         if self.config.enable_thinking:
             self.thinking_task = asyncio.create_task(self._autonomous_thinking_loop())
@@ -98,7 +98,7 @@ class IntelligentAgent:
             except asyncio.CancelledError:
                 pass
         
-        logger.info(f"🛑 Stopped agent: {self.config.agent_id}")
+        logger.info(f" Stopped agent: {self.config.agent_id}")
     
     async def pause(self):
         """Pause the agent"""
@@ -129,7 +129,7 @@ class IntelligentAgent:
                 self.stats["thoughts_generated"] += 1
                 self.stats["total_ai_calls"] += 1
                 
-                logger.debug(f"💭 Agent {self.config.agent_id} thought: {thoughts[:100]}...")
+                logger.debug(f" Agent {self.config.agent_id} thought: {thoughts[:100]}...")
                 
                 # Wait before next thinking cycle
                 await asyncio.sleep(self.config.thinking_frequency)
@@ -337,7 +337,7 @@ class IntelligentAgent:
 # Example usage and testing
 async def test_intelligent_agent():
     """Test the intelligent agent"""
-    print("🧠 Testing Intelligent Agent with Gemma 3N...")
+    print(" Testing Intelligent Agent with Gemma 3N...")
     
     # Create agent configuration
     config = AgentConfig(
@@ -356,7 +356,7 @@ async def test_intelligent_agent():
     await agent.start()
     
     # Let it think for a bit
-    print("💭 Agent is thinking autonomously...")
+    print(" Agent is thinking autonomously...")
     await asyncio.sleep(10)
     
     # Test reasoning
@@ -370,7 +370,7 @@ async def test_intelligent_agent():
     print(f"Response: {response}")
     
     # Show stats
-    print(f"\n📊 Agent Stats: {agent.get_stats()}")
+    print(f"\n Agent Stats: {agent.get_stats()}")
     
     # Stop the agent
     await agent.stop()

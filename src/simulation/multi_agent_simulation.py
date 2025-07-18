@@ -89,7 +89,7 @@ class MultiAgentSimulation:
             agent = IntelligentAgent(agent_config)
             self.agents[agent_config.agent_id] = agent
         
-        logger.info(f"🤖 Created {len(self.agents)} agents: {list(self.agents.keys())}")
+        logger.info(f" Created {len(self.agents)} agents: {list(self.agents.keys())}")
     
     async def start_simulation(self):
         """Start the multi-agent simulation"""
@@ -100,7 +100,7 @@ class MultiAgentSimulation:
         self.is_running = True
         self.start_time = datetime.now()
         
-        logger.info(f"🚀 Starting multi-agent simulation: {self.config.simulation_id}")
+        logger.info(f" Starting multi-agent simulation: {self.config.simulation_id}")
         
         # Start all agents
         for agent in self.agents.values():
@@ -146,7 +146,7 @@ class MultiAgentSimulation:
             except asyncio.CancelledError:
                 pass
         
-        logger.info(f"🛑 Stopped simulation: {self.config.simulation_id}")
+        logger.info(f" Stopped simulation: {self.config.simulation_id}")
     
     async def _agent_communication_loop(self):
         """Loop for agent-to-agent communication"""
@@ -253,7 +253,7 @@ class MultiAgentSimulation:
                 elapsed = (datetime.now() - self.start_time).total_seconds()
                 remaining = max(0, self.config.duration_seconds - elapsed)
                 
-                logger.info(f"📊 Simulation Status - Elapsed: {elapsed:.1f}s, Remaining: {remaining:.1f}s")
+                logger.info(f" Simulation Status - Elapsed: {elapsed:.1f}s, Remaining: {remaining:.1f}s")
                 logger.info(f"  Thoughts: {self.stats['total_thoughts']}, Communications: {self.stats['total_communications']}")
                 
                 # Check if simulation should end
@@ -341,8 +341,8 @@ async def demo_multi_agent_simulation():
     # Create agents
     simulation.create_agents()
     
-    print("🤖 Agents created and ready")
-    print("🚀 Starting simulation...")
+    print(" Agents created and ready")
+    print(" Starting simulation...")
     
     # Start simulation
     try:
@@ -354,7 +354,7 @@ async def demo_multi_agent_simulation():
     
     # Show final stats
     stats = simulation.get_simulation_stats()
-    print("\n📊 Final Simulation Statistics:")
+    print("\n Final Simulation Statistics:")
     print(f"  Total Thoughts: {stats['simulation_stats']['total_thoughts']}")
     print(f"  Total Communications: {stats['simulation_stats']['total_communications']}")
     print(f"  Total Reasoning Sessions: {stats['simulation_stats']['total_reasoning_sessions']}")
@@ -363,7 +363,7 @@ async def demo_multi_agent_simulation():
     # Export data
     simulation.export_simulation_data("hackathon_demo_results.json")
     
-    print("\n✅ Demo completed! Check hackathon_demo_results.json for detailed data.")
+    print("\n Demo completed! Check hackathon_demo_results.json for detailed data.")
 
 if __name__ == "__main__":
     asyncio.run(demo_multi_agent_simulation())

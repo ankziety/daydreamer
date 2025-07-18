@@ -83,24 +83,24 @@ async def demo_basic_scheduling():
         print_task_info(task)
         scheduler.submit_task(task)
     
-    print("🚀 Starting scheduler...")
+    print(" Starting scheduler...")
     await scheduler.start()
     
     # Wait for tasks to complete
     await asyncio.sleep(4.0)
     
-    print("🛑 Stopping scheduler...")
+    print(" Stopping scheduler...")
     await scheduler.stop()
     
     # Show results
-    print("\n📊 Results:")
+    print("\n Results:")
     completed_tasks = scheduler.get_completed_tasks()
     for task in completed_tasks:
-        print(f"  ✅ {task.name} - Completed in {task.get_execution_time():.2f}s")
+        print(f"   {task.name} - Completed in {task.get_execution_time():.2f}s")
     
     # Show statistics
     stats = scheduler.get_stats()
-    print(f"\n📈 Statistics:")
+    print(f"\n Statistics:")
     print(f"  Total tasks submitted: {stats['total_tasks_submitted']}")
     print(f"  Total tasks completed: {stats['total_tasks_completed']}")
     print(f"  Average completion time: {stats['average_completion_time']:.2f}s")
@@ -146,17 +146,17 @@ async def demo_dependency_resolution():
         print_task_info(task)
         scheduler.submit_task(task)
     
-    print("🚀 Starting scheduler...")
+    print(" Starting scheduler...")
     await scheduler.start()
     
     # Wait for all tasks to complete
     await asyncio.sleep(3.0)
     
-    print("🛑 Stopping scheduler...")
+    print(" Stopping scheduler...")
     await scheduler.stop()
     
     # Show execution order
-    print("\n📊 Execution Order:")
+    print("\n Execution Order:")
     completed_tasks = scheduler.get_completed_tasks()
     for i, task in enumerate(completed_tasks, 1):
         print(f"  {i}. {task.name} - {task.get_execution_time():.2f}s")
@@ -179,7 +179,7 @@ async def demo_resource_management():
     scheduler.resource_manager.add_resource(cpu_resource)
     scheduler.resource_manager.add_resource(memory_resource)
     
-    print("🔧 Available Resources:")
+    print(" Available Resources:")
     print(f"  CPU: {cpu_resource.capacity} cores")
     print(f"  Memory: {memory_resource.capacity} GB")
     
@@ -213,23 +213,23 @@ async def demo_resource_management():
         print_task_info(task)
         scheduler.submit_task(task)
     
-    print("🚀 Starting scheduler...")
+    print(" Starting scheduler...")
     await scheduler.start()
     
     # Wait for tasks to complete
     await asyncio.sleep(4.0)
     
-    print("🛑 Stopping scheduler...")
+    print(" Stopping scheduler...")
     await scheduler.stop()
     
     # Show resource utilization
-    print("\n📊 Resource Utilization:")
+    print("\n Resource Utilization:")
     resource_stats = scheduler.resource_manager.get_stats()
     print(f"  Total allocations: {resource_stats['total_allocations']}")
     print(f"  Total deallocations: {resource_stats['total_deallocations']}")
     
     # Show final resource state
-    print("\n🔧 Final Resource State:")
+    print("\n Final Resource State:")
     for resource in [cpu_resource, memory_resource]:
         print(f"  {resource.name}: {resource.available}/{resource.capacity} {resource.unit} available")
 
@@ -246,7 +246,7 @@ async def demo_different_algorithms():
     ]
     
     for algorithm_name, algorithm in algorithms:
-        print(f"\n🔄 Testing {algorithm_name}...")
+        print(f"\n Testing {algorithm_name}...")
         
         scheduler = TaskScheduler(
             algorithm=algorithm,
@@ -311,15 +311,15 @@ async def demo_event_handlers():
     
     def task_started_handler(task):
         events.append(f"Started: {task.name}")
-        print(f"  🚀 Event: Task '{task.name}' started")
+        print(f"   Event: Task '{task.name}' started")
     
     def task_completed_handler(task):
         events.append(f"Completed: {task.name}")
-        print(f"  ✅ Event: Task '{task.name}' completed")
+        print(f"   Event: Task '{task.name}' completed")
     
     def task_failed_handler(task):
         events.append(f"Failed: {task.name}")
-        print(f"  ❌ Event: Task '{task.name}' failed: {task.error_message}")
+        print(f"   Event: Task '{task.name}' failed: {task.error_message}")
     
     # Register event handlers
     scheduler.add_event_handler("task_started", task_started_handler)
@@ -336,16 +336,16 @@ async def demo_event_handlers():
     for task in tasks:
         scheduler.submit_task(task)
     
-    print("🚀 Starting scheduler with event handlers...")
+    print(" Starting scheduler with event handlers...")
     await scheduler.start()
     
     # Wait for tasks to complete
     await asyncio.sleep(2.0)
     
-    print("🛑 Stopping scheduler...")
+    print(" Stopping scheduler...")
     await scheduler.stop()
     
-    print(f"\n📊 Total events received: {len(events)}")
+    print(f"\n Total events received: {len(events)}")
 
 
 async def demo_task_monitoring():
@@ -391,11 +391,11 @@ async def demo_task_monitoring():
     for task in tasks:
         scheduler.submit_task(task)
     
-    print("🚀 Starting scheduler...")
+    print(" Starting scheduler...")
     await scheduler.start()
     
     # Monitor progress
-    print("\n📊 Monitoring progress...")
+    print("\n Monitoring progress...")
     for i in range(5):
         stats = scheduler.get_stats()
         summary = scheduler.get_task_summary()
@@ -407,11 +407,11 @@ async def demo_task_monitoring():
         
         await asyncio.sleep(0.5)
     
-    print("🛑 Stopping scheduler...")
+    print(" Stopping scheduler...")
     await scheduler.stop()
     
     # Show final statistics
-    print("\n📈 Final Statistics:")
+    print("\n Final Statistics:")
     final_stats = scheduler.get_stats()
     print(f"  Total tasks submitted: {final_stats['total_tasks_submitted']}")
     print(f"  Total tasks completed: {final_stats['total_tasks_completed']}")
@@ -442,8 +442,8 @@ async def main():
         await demo_task_monitoring()
         
         print_separator("Demo Complete")
-        print("✅ All demos completed successfully!")
-        print("\n🎯 Key Features Demonstrated:")
+        print(" All demos completed successfully!")
+        print("\n Key Features Demonstrated:")
         print("  • Priority-based task scheduling")
         print("  • Task dependency resolution")
         print("  • Resource allocation and management")

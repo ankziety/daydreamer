@@ -13,9 +13,9 @@ import logging
 def check_python_version():
     """Check if Python version is compatible"""
     if sys.version_info < (3, 8):
-        print("❌ Python 3.8 or higher is required")
+        print(" Python 3.8 or higher is required")
         sys.exit(1)
-    print(f"✅ Python {sys.version_info.major}.{sys.version_info.minor} detected")
+    print(f" Python {sys.version_info.major}.{sys.version_info.minor} detected")
 
 def install_ollama():
     """Install Ollama if not already installed"""
@@ -23,7 +23,7 @@ def install_ollama():
         # Check if ollama is installed
         result = subprocess.run(["ollama", "--version"], capture_output=True, text=True)
         if result.returncode == 0:
-            print(f"✅ Ollama is already installed: {result.stdout.strip()}")
+            print(f" Ollama is already installed: {result.stdout.strip()}")
             return True
     except FileNotFoundError:
         pass
@@ -36,10 +36,10 @@ def install_ollama():
             subprocess.run([
                 "curl", "-fsSL", "https://ollama.ai/install.sh"
             ], shell=True, check=True)
-            print("✅ Ollama installed successfully")
+            print(" Ollama installed successfully")
             return True
         except subprocess.CalledProcessError:
-            print("❌ Failed to install Ollama automatically")
+            print(" Failed to install Ollama automatically")
             print("Please install manually: https://ollama.ai/download")
             return False
     elif sys.platform == "darwin":  # macOS
@@ -47,20 +47,20 @@ def install_ollama():
             subprocess.run([
                 "curl", "-fsSL", "https://ollama.ai/install.sh"
             ], shell=True, check=True)
-            print("✅ Ollama installed successfully")
+            print(" Ollama installed successfully")
             return True
         except subprocess.CalledProcessError:
-            print("❌ Failed to install Ollama automatically")
+            print(" Failed to install Ollama automatically")
             print("Please install manually: https://ollama.ai/download")
             return False
     else:
-        print("❌ Automatic Ollama installation not supported on this platform")
+        print(" Automatic Ollama installation not supported on this platform")
         print("Please install manually: https://ollama.ai/download")
         return False
 
 def download_gemma3n():
     """Download Gemma 3N model"""
-    print("🤖 Downloading Gemma 3N model...")
+    print(" Downloading Gemma 3N model...")
     
     try:
         # Pull the model
@@ -69,13 +69,13 @@ def download_gemma3n():
         ], capture_output=True, text=True)
         
         if result.returncode == 0:
-            print("✅ Gemma 3N model downloaded successfully")
+            print(" Gemma 3N model downloaded successfully")
             return True
         else:
-            print(f"❌ Failed to download Gemma 3N: {result.stderr}")
+            print(f" Failed to download Gemma 3N: {result.stderr}")
             return False
     except Exception as e:
-        print(f"❌ Error downloading Gemma 3N: {e}")
+        print(f" Error downloading Gemma 3N: {e}")
         return False
 
 def install_python_dependencies():
@@ -86,15 +86,15 @@ def install_python_dependencies():
         subprocess.run([
             sys.executable, "-m", "pip", "install", "ollama"
         ], check=True)
-        print("✅ Python dependencies installed")
+        print(" Python dependencies installed")
         return True
     except subprocess.CalledProcessError as e:
-        print(f"❌ Failed to install Python dependencies: {e}")
+        print(f" Failed to install Python dependencies: {e}")
         return False
 
 def test_gemma3n():
     """Test Gemma 3N integration"""
-    print("🧪 Testing Gemma 3N integration...")
+    print(" Testing Gemma 3N integration...")
     
     try:
         import ollama
@@ -105,15 +105,15 @@ def test_gemma3n():
             messages=[{'role': 'user', 'content': 'Hello! Are you working?'}]
         )
         
-        print("✅ Gemma 3N is working!")
+        print(" Gemma 3N is working!")
         print(f"Response: {response['message']['content'][:100]}...")
         return True
         
     except ImportError:
-        print("❌ Ollama Python package not installed")
+        print(" Ollama Python package not installed")
         return False
     except Exception as e:
-        print(f"❌ Gemma 3N test failed: {e}")
+        print(f" Gemma 3N test failed: {e}")
         return False
 
 async def run_demo():
@@ -129,18 +129,18 @@ async def run_demo():
         await demo_multi_agent_simulation()
         
     except ImportError as e:
-        print(f"❌ Failed to import demo: {e}")
+        print(f" Failed to import demo: {e}")
         print("Make sure you're in the project root directory")
         return False
     except Exception as e:
-        print(f"❌ Demo failed: {e}")
+        print(f" Demo failed: {e}")
         return False
     
     return True
 
 def main():
     """Main setup and demo function"""
-    print("🚀 Daydreamer Project - Quick Start")
+    print(" Daydreamer Project - Quick Start")
     print("=" * 40)
     
     # Check Python version
@@ -148,26 +148,26 @@ def main():
     
     # Install Ollama
     if not install_ollama():
-        print("❌ Ollama installation failed. Please install manually.")
+        print(" Ollama installation failed. Please install manually.")
         return
     
     # Download Gemma 3N
     if not download_gemma3n():
-        print("❌ Gemma 3N download failed.")
+        print(" Gemma 3N download failed.")
         return
     
     # Install Python dependencies
     if not install_python_dependencies():
-        print("❌ Python dependencies installation failed.")
+        print(" Python dependencies installation failed.")
         return
     
     # Test Gemma 3N
     if not test_gemma3n():
-        print("❌ Gemma 3N test failed.")
+        print(" Gemma 3N test failed.")
         return
     
-    print("\n✅ Setup completed successfully!")
-    print("🎯 Ready to run Daydreamer demo...")
+    print("\n Setup completed successfully!")
+    print(" Ready to run Daydreamer demo...")
     
     # Ask user if they want to run the demo
     response = input("\nRun the demo now? (y/N): ").strip().lower()

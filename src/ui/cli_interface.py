@@ -140,7 +140,7 @@ class CLIInterface(cmd.Cmd):
     """
     
     intro = """
-🧠 Daydreamer CLI Interface
+ Daydreamer CLI Interface
 ==========================
 Type 'help' for available commands or 'exit' to quit.
 """
@@ -359,11 +359,11 @@ Type 'help' for available commands or 'exit' to quit.
         """Execute a command from the registry"""
         command = self.command_registry.get_command(command_name)
         if not command:
-            print(f"❌ Unknown command: {command_name}")
+            print(f" Unknown command: {command_name}")
             return False
         
         if command.requires_simulation and not self.simulation:
-            print("❌ No simulation running. Use 'start' to create one.")
+            print(" No simulation running. Use 'start' to create one.")
             return False
         
         try:
@@ -379,14 +379,14 @@ Type 'help' for available commands or 'exit' to quit.
             return result
             
         except Exception as e:
-            print(f"❌ Error executing {command_name}: {e}")
+            print(f" Error executing {command_name}: {e}")
             self.log_viewer.add_log(f"Command error: {command_name} - {e}", "ERROR")
             return False
     
     def _cmd_start(self, args: List[str]):
         """Start a new simulation"""
         if self.simulation and self.simulation.is_running:
-            print("❌ Simulation already running. Use 'stop' first.")
+            print(" Simulation already running. Use 'stop' first.")
             return False
         
         # Parse arguments
@@ -422,7 +422,7 @@ Type 'help' for available commands or 'exit' to quit.
         # Start simulation in background
         asyncio.create_task(self.simulation.start_simulation())
         
-        print(f"🚀 Started simulation: {simulation_id}")
+        print(f" Started simulation: {simulation_id}")
         print(f"   Duration: {duration} seconds")
         print(f"   Agents: {agent_count}")
         print(f"   Interaction frequency: {interaction_frequency}s")
@@ -432,24 +432,24 @@ Type 'help' for available commands or 'exit' to quit.
     def _cmd_stop(self, args: List[str]):
         """Stop the current simulation"""
         if not self.simulation:
-            print("❌ No simulation running")
+            print(" No simulation running")
             return False
         
         asyncio.create_task(self.simulation.stop_simulation())
-        print("🛑 Stopping simulation...")
+        print(" Stopping simulation...")
         return True
     
     def _cmd_status(self, args: List[str]):
         """Show simulation status"""
         if not self.simulation:
-            print("📊 Status: No simulation running")
+            print(" Status: No simulation running")
             return True
         
         stats = self.simulation.get_simulation_stats()
         
-        print("📊 Simulation Status:")
+        print(" Simulation Status:")
         print(f"   ID: {self.simulation.config.simulation_id}")
-        print(f"   Running: {'✅ Yes' if self.simulation.is_running else '❌ No'}")
+        print(f"   Running: {' Yes' if self.simulation.is_running else ' No'}")
         print(f"   Agents: {len(self.simulation.agents)}")
         print(f"   Total Thoughts: {stats.get('total_thoughts', 0)}")
         print(f"   Total Communications: {stats.get('total_communications', 0)}")
@@ -461,12 +461,12 @@ Type 'help' for available commands or 'exit' to quit.
     def _cmd_agents(self, args: List[str]):
         """List all agents"""
         if not self.simulation:
-            print("❌ No simulation running")
+            print(" No simulation running")
             return False
         
-        print("🤖 Agents:")
+        print(" Agents:")
         for agent_id, agent in self.simulation.agents.items():
-            status = "🟢 Active" if agent.is_running else "🔴 Inactive"
+            status = "🟢 Active" if agent.is_running else " Inactive"
             print(f"   {agent_id} ({agent.config.personality}) - {status}")
         
         return True
@@ -474,24 +474,24 @@ Type 'help' for available commands or 'exit' to quit.
     def _cmd_agent(self, args: List[str]):
         """Show detailed agent information"""
         if not self.simulation:
-            print("❌ No simulation running")
+            print(" No simulation running")
             return False
         
         if not args:
-            print("❌ Please specify an agent ID")
+            print(" Please specify an agent ID")
             return False
         
         agent_id = args[0]
         if agent_id not in self.simulation.agents:
-            print(f"❌ Agent '{agent_id}' not found")
+            print(f" Agent '{agent_id}' not found")
             return False
         
         agent = self.simulation.agents[agent_id]
         
-        print(f"🤖 Agent: {agent_id}")
+        print(f" Agent: {agent_id}")
         print(f"   Personality: {agent.config.personality}")
         print(f"   Thinking Frequency: {agent.config.thinking_frequency}s")
-        print(f"   Status: {'🟢 Active' if agent.is_running else '🔴 Inactive'}")
+        print(f"   Status: {'🟢 Active' if agent.is_running else ' Inactive'}")
         print(f"   Thoughts Generated: {getattr(agent, 'thought_count', 0)}")
         print(f"   Communications: {getattr(agent, 'communication_count', 0)}")
         
@@ -511,7 +511,7 @@ Type 'help' for available commands or 'exit' to quit.
             if value is not None:
                 print(f"⚙️ {key}: {value}")
             else:
-                print(f"❌ Configuration key '{key}' not found")
+                print(f" Configuration key '{key}' not found")
         elif len(args) == 2:
             # Set configuration
             key, value = args
@@ -525,9 +525,9 @@ Type 'help' for available commands or 'exit' to quit.
                     value = float(value)
                 
                 self.config_manager.set(key, value)
-                print(f"✅ Set {key} = {value}")
+                print(f" Set {key} = {value}")
             except Exception as e:
-                print(f"❌ Failed to set configuration: {e}")
+                print(f" Failed to set configuration: {e}")
         
         return True
     
@@ -538,9 +538,9 @@ Type 'help' for available commands or 'exit' to quit.
         try:
             with open(filename, 'w') as f:
                 json.dump(self.config_manager.config, f, indent=2)
-            print(f"✅ Configuration saved to {filename}")
+            print(f" Configuration saved to {filename}")
         except Exception as e:
-            print(f"❌ Failed to save configuration: {e}")
+            print(f" Failed to save configuration: {e}")
         
         return True
     
@@ -552,9 +552,9 @@ Type 'help' for available commands or 'exit' to quit.
             with open(filename, 'r') as f:
                 config = json.load(f)
                 self.config_manager.config.update(config)
-            print(f"✅ Configuration loaded from {filename}")
+            print(f" Configuration loaded from {filename}")
         except Exception as e:
-            print(f"❌ Failed to load configuration: {e}")
+            print(f" Failed to load configuration: {e}")
         
         return True
     
@@ -584,14 +584,14 @@ Type 'help' for available commands or 'exit' to quit.
     def _cmd_clear_logs(self, args: List[str]):
         """Clear log history"""
         self.log_viewer.clear_logs()
-        print("✅ Log history cleared")
+        print(" Log history cleared")
         return True
     
     def _cmd_help(self, args: List[str]):
         """Show help information"""
         if not args:
             # Show general help
-            print("🧠 Daydreamer CLI - Available Commands:")
+            print(" Daydreamer CLI - Available Commands:")
             print()
             
             commands = self.command_registry.list_commands()
@@ -611,14 +611,14 @@ Type 'help' for available commands or 'exit' to quit.
                 print(f"   Description: {cmd.description}")
                 print(f"   Usage: {cmd.usage}")
             else:
-                print(f"❌ Unknown command: {cmd_name}")
+                print(f" Unknown command: {cmd_name}")
         
         return True
     
     def _cmd_exit(self, args: List[str]):
         """Exit the CLI"""
         if self.simulation and self.simulation.is_running:
-            print("🛑 Stopping simulation before exit...")
+            print(" Stopping simulation before exit...")
             asyncio.create_task(self.simulation.stop_simulation())
         
         # Save command history
