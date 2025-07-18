@@ -205,3 +205,12 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Daydreamer AI specific
+*.db
+*.db-wal
+*.db-shm
+daydreamer_memory.db*
+chat_memory.db*
+memory_store.db*
+*_memory.db*
