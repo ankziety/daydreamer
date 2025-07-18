@@ -16,6 +16,7 @@ from src.dmn import (
     IntrusiveThoughtsSystem, BrainBreakManager, Synthesizer,
     DMNMemoryCurator
 )
+from src.dmn.ai_thought_generator import AIThoughtGenerator, ThoughtContext
 from src.memory import MemoryType
 
 # Set up clean logging for demo
@@ -87,18 +88,35 @@ async def demonstrate_dmn():
     await intrusive_thoughts.start()
     await driver.start()
     
-    # Add some specific intrusive thoughts to demonstrate the concept
-    print("\n💡 Adding some external intrusive thoughts to demonstrate variety...")
-    demo_thoughts = [
-        ("What if dreams are previews of parallel universes?", 8, 6),
-        ("Why do we say 'after dark' when it's actually after light?", 5, 4),
-        ("What if every decision creates a new universe?", 9, 7),
-        ("Do fish ever get thirsty?", 3, 2),
-        ("What if time is just a human construct?", 7, 5)
+    # Generate AI-powered intrusive thoughts to demonstrate the concept
+    print("\n💡 Generating AI-powered intrusive thoughts to demonstrate variety...")
+    ai_generator = AIThoughtGenerator()
+    await ai_generator.initialize()
+    
+    # Generate different types of thoughts using AI
+    thought_contexts = [
+        (ThoughtContext.PHILOSOPHICAL, 8, 6),
+        (ThoughtContext.RANDOM, 5, 4),
+        (ThoughtContext.CREATIVE, 9, 7),
+        (ThoughtContext.ABSURD, 3, 2),
+        (ThoughtContext.WORRY, 7, 5)
     ]
     
+    demo_thoughts = []
+    for context, intensity, difficulty in thought_contexts:
+        try:
+            thought_content = await ai_generator.generate_thought(context, intensity, difficulty)
+            demo_thoughts.append((thought_content, intensity, difficulty))
+            print(f"   Generated {context.value} thought: '{thought_content}'")
+        except Exception as e:
+            # Fallback to ensure demo continues
+            fallback_content = f"AI-generated {context.value} thought (AI temporarily unavailable)"
+            demo_thoughts.append((fallback_content, intensity, difficulty))
+            print(f"   Fallback {context.value} thought: '{fallback_content}'")
+    
+    # Add first 3 thoughts immediately
     for i, (content, intensity, difficulty) in enumerate(demo_thoughts):
-        if i < 3:  # Add first 3 immediately
+        if i < 3:
             driver.add_intrusive_thought(content, intensity, difficulty)
         await asyncio.sleep(0.5)
     
