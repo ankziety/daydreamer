@@ -242,7 +242,7 @@ class TransformersClient:
                 full_prompt = f"User: {request.prompt}\nAI:"
             
             # Tokenize
-            inputs = self.tokenizer.encode(full_prompt, return_tensors='pt', truncate=True, max_length=1024)
+            inputs = self.tokenizer.encode(full_prompt, return_tensors='pt', truncation=True, max_length=1024)
             inputs = inputs.to(self.device)
             
             # Generate

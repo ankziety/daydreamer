@@ -389,8 +389,14 @@ class ChainOfThoughtProcessor:
         try:
             # Handle different model client types
             if hasattr(self.model_client, 'generate_response'):
-                # Ollama-style client
-                response = await self.model_client.generate_response(prompt)
+                # ModelManager or Ollama-style client - needs ModelRequest object
+                from ollama_integration import ModelRequest
+                request = ModelRequest(
+                    prompt=prompt,
+                    max_tokens=300,
+                    temperature=0.7
+                )
+                response = await self.model_client.generate_response(request)
                 return response.content if hasattr(response, 'content') else str(response)
             elif hasattr(self.model_client, 'generate'):
                 # Transformers-style client

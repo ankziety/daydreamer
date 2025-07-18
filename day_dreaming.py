@@ -430,7 +430,14 @@ class DaydreamingEngine:
         try:
             # Handle different model client types (same as chain_of_thought.py)
             if hasattr(self.model_client, 'generate_response'):
-                response = await self.model_client.generate_response(prompt)
+                # ModelManager or Ollama-style client - needs ModelRequest object
+                from ollama_integration import ModelRequest
+                request = ModelRequest(
+                    prompt=prompt,
+                    max_tokens=300,
+                    temperature=0.8  # Higher temperature for more creative daydreaming
+                )
+                response = await self.model_client.generate_response(request)
                 return response.content if hasattr(response, 'content') else str(response)
             elif hasattr(self.model_client, 'generate'):
                 response = await self.model_client.generate(prompt)
