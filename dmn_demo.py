@@ -28,7 +28,7 @@ async def demonstrate_dmn():
     
     print("DEFAULT MODE NETWORK DEMONSTRATION")
     print("=" * 40)
-    print("System testing thought generation capabilities")
+    print("Neural simulation test")
     print("=" * 40)
     
     # Initialize system
@@ -46,21 +46,13 @@ async def demonstrate_dmn():
     driver.register_component("synthesizer", synthesizer)
     driver.register_component("memory_curator", memory_curator)
     
-    # Add initial context
-    print("\nAdding initial memory context...")
-    initial_context = [
-        "I am contemplating the nature of consciousness",
-        "Patterns seem to emerge in complex systems", 
-        "Creativity often arises during relaxed states",
-        "The mind wanders during periods of low focus"
-    ]
-    
-    for thought in initial_context:
-        memory_curator.memory_store.store_memory(
-            content=thought,
-            memory_type=MemoryType.EPISODIC,
-            importance=0.6
-        )
+    # Skip hardcoded memory injection - use only real conversation history
+    print("\nUsing existing memory store (if any)...")
+    existing_memories = memory_curator.memory_store.get_recent_memories(hours=168, limit=5)
+    if existing_memories:
+        print(f"Found {len(existing_memories)} existing memories for thought generation")
+    else:
+        print("No existing memories found - DMN will generate from general knowledge")
     
     # Set up event monitoring
     intrusive_count = 0
@@ -76,7 +68,7 @@ async def demonstrate_dmn():
     
     def track_mode_change(data):
         mode_changes.append((data['old_mode'].value, data['new_mode'].value))
-        print(f"MODE CHANGE: {data['old_mode'].value} → {data['new_mode'].value}")
+        print(f"MODE CHANGE: {data['old_mode'].value} -> {data['new_mode'].value}")
     
     driver.register_event_handler("intrusive_thought", track_intrusive_thought)
     driver.register_event_handler("mode_change", track_mode_change)
@@ -86,39 +78,37 @@ async def demonstrate_dmn():
     await intrusive_thoughts.start()
     await driver.start()
     
-    # Test AI thought generation with memory context
-    print("\nTesting AI thought generation with memory context...")
+    # Test AI thought generation
+    print("\nTesting AI thought generation...")
     ai_generator = AIThoughtGenerator(memory_store=memory_curator.memory_store)
     await ai_generator.initialize()
     
-    # Generate thoughts using AI with memory context
-    thought_contexts = [
-        (ThoughtContext.PHILOSOPHICAL, 8, 6),
-        (ThoughtContext.RANDOM, 5, 4),
-        (ThoughtContext.CREATIVE, 9, 7),
-        (ThoughtContext.ABSURD, 3, 2),
-    ]
+    print(f"AI Generator Status: {ai_generator.get_status()}")
     
+    # Generate thoughts using only AI - no hardcoded content
     demo_thoughts = []
-    for context, intensity, difficulty in thought_contexts:
+    for i in range(4):
         try:
+            # Use random context to avoid bias
+            contexts = list(ThoughtContext)
+            context = contexts[i % len(contexts)]
+            intensity = 3 + (i * 2)  # Vary intensity
+            difficulty = 2 + (i * 2)  # Vary difficulty
+            
             thought_content = await ai_generator.generate_thought(context, intensity, difficulty)
             demo_thoughts.append((thought_content, intensity, difficulty))
-            print(f"Generated {context.value} thought: '{thought_content}'")
+            print(f"Generated thought {i+1}: '{thought_content}'")
         except Exception as e:
-            # Fallback to ensure demo continues
-            fallback_content = f"Generated {context.value} thought (model temporarily unavailable)"
-            demo_thoughts.append((fallback_content, intensity, difficulty))
-            print(f"Fallback {context.value} thought: '{fallback_content}'")
+            print(f"Failed to generate thought {i+1}: {e}")
     
-    # Add first 3 thoughts immediately
+    # Add thoughts to system
     for i, (content, intensity, difficulty) in enumerate(demo_thoughts):
         if i < 3:
             driver.add_intrusive_thought(content, intensity, difficulty)
         await asyncio.sleep(0.5)
     
     print("\nObserving DMN behavior for 20 seconds...")
-    print("(Watch for spontaneous thoughts, mode changes, and insights)")
+    print("Watching for neural activity and mode transitions")
     print("-" * 50)
     
     # Observe the system
@@ -144,8 +134,6 @@ async def demonstrate_dmn():
                 print(f"    Latest thought: '{context.chunks[-1][:50]}...'")
             
             # Get recent insights
-            recent_syntheses = synthesizer.get_recent_syntheses(1)
-            if recent_syntheses:
             recent_syntheses = synthesizer.get_recent_syntheses(1)
             if recent_syntheses:
                 insight = recent_syntheses[0]

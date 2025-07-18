@@ -50,7 +50,7 @@ class AIThoughtConfig:
     """Configuration for AI thought generation"""
     model_type: str = "gpt2"  # "gpt2", "gemma", "local"
     temperature: float = 0.8
-    max_tokens: int = 50
+    max_tokens: int = 20  # Reduced for cleaner thoughts
     top_p: float = 0.9
     enable_caching: bool = True
     fallback_enabled: bool = True
@@ -71,13 +71,13 @@ class AIThoughtGenerator:
         self.generator = None
         self.is_initialized = False
         
-        # Task-focused system prompts for Default Mode Network thought generation
-        self.base_system_prompt = """You are simulating Default Mode Network activation. During DMN states, the brain processes memories and generates spontaneous thoughts through associative connections. Given the memory chunks below, generate a single brief thought that could naturally emerge from these associations. The thought should feel spontaneous and unforced.
+        # Neural simulation system prompt for Default Mode Network
+        self.base_system_prompt = """You are simulating default mode network neural activity during rest states. When presented with memory fragments, process them as the brain naturally does - allowing associations to emerge without conscious direction. Output only the emergent thought content.
 
-Memory chunks:
+Memory fragments:
 {memory_chunks}
 
-Generate one natural thought (1-2 sentences) that could arise from processing these memories."""
+Task: Generate emergent thought."""
     
     async def initialize(self):
         """Initialize the AI thought generator"""
@@ -196,13 +196,13 @@ Generate one natural thought (1-2 sentences) that could arise from processing th
         # Enhanced system message with intensity/difficulty context
         enhanced_system = f"""{system_prompt}
 
-Context: Intensity level {intensity}/10 (how disruptive the thought is)
-Difficulty level {difficulty}/10 (how hard it is to dismiss)
+Neural activation intensity: {intensity}/10
+Processing difficulty: {difficulty}/10
 
-Generate only the thought content - no prefixes, explanations, or meta-commentary."""
+Output only the thought content."""
 
         # Use minimal prompt to avoid bias
-        prompt = "Generate a thought:"
+        prompt = "Process memory fragments:"
         
         request = ModelRequest(
             prompt=prompt,
@@ -223,20 +223,16 @@ Generate only the thought content - no prefixes, explanations, or meta-commentar
     async def _generate_with_gpt2(self, system_prompt: str, context: ThoughtContext,
                                 intensity: int, difficulty: int) -> str:
         """Generate thought using GPT-2 model with unbiased approach"""
-        # Use context-aware but unbiased prompts for GPT-2
-        context_prompts = {
-            ThoughtContext.INTRUSIVE: "A sudden thought:",
-            ThoughtContext.RANDOM: "Random thought:",
-            ThoughtContext.CREATIVE: "Creative idea:",
-            ThoughtContext.PHILOSOPHICAL: "Deep thought:",
-            ThoughtContext.WORRY: "Worried thought:",
-            ThoughtContext.MEMORY: "Memory:",
-            ThoughtContext.SENSORY: "Sensory thought:",
-            ThoughtContext.ABSURD: "Strange thought:"
-        }
+        # Get memory chunks first
+        memory_chunks = await self._get_memory_chunks()
         
-        # Minimal prompt without leading content
-        prompt = context_prompts.get(context, "Thought:")
+        # Use memory-driven prompt that works with GPT-2's conversational training
+        if memory_chunks and "No specific memories" not in memory_chunks:
+            # Use memory fragments to seed natural thought
+            prompt = f"Thinking about: {memory_chunks.split('Memory 1: ')[-1].split('Memory 2:')[0].strip()}\n\nA thought emerges:"
+        else:
+            # Use generic prompt for general knowledge
+            prompt = "A thought emerges:"
         
         # Generate in async context
         loop = asyncio.get_event_loop()
@@ -244,36 +240,25 @@ Generate only the thought content - no prefixes, explanations, or meta-commentar
             None,
             lambda: self.generator(
                 prompt,
-                max_length=len(prompt.split()) + self.config.max_tokens // 4,
+                max_new_tokens=self.config.max_tokens,
                 temperature=self.config.temperature,
                 top_p=self.config.top_p,
                 do_sample=True,
                 num_return_sequences=1,
-                pad_token_id=self.generator.tokenizer.eos_token_id
+                pad_token_id=self.generator.tokenizer.eos_token_id,
+                truncation=True
             )
         )
         
         generated_text = result[0]['generated_text']
-        # Extract just the new part
+        # Extract just the new part after the prompt
         thought = generated_text[len(prompt):].strip()
         return self._clean_thought(thought)
     
     async def _generate_fallback(self, system_prompt: str, context: ThoughtContext,
                                intensity: int, difficulty: int) -> str:
         """Minimal fallback when no models are available"""
-        simple_thoughts = {
-            ThoughtContext.INTRUSIVE: "A sudden thought about something unexpected",
-            ThoughtContext.RANDOM: "A random idea pops into mind", 
-            ThoughtContext.CREATIVE: "An artistic idea emerges",
-            ThoughtContext.PHILOSOPHICAL: "A deep question about existence",
-            ThoughtContext.WORRY: "A concern about the future",
-            ThoughtContext.MEMORY: "A memory from the past surfaces",
-            ThoughtContext.SENSORY: "Imagining a sensory experience",
-            ThoughtContext.ABSURD: "An impossible scenario unfolds"
-        }
-        
-        base_thought = simple_thoughts.get(context, "A thought occurs")
-        return f"{base_thought} (intensity: {intensity}, difficulty: {difficulty})"
+        return f"DMN simulation unavailable (no AI model loaded)"
     
     def _clean_thought(self, thought: str) -> str:
         """Clean and format the generated thought"""
