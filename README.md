@@ -1,6 +1,36 @@
 # Daydreamer
 
-An attempt to create a default mode network AI that can self prompt thoughts using similar algorithms to biological processes.
+A Default Mode Network AI that exhibits intrusive thoughts and random ideas, similar to biological processes.
+
+## 🚀 Installation
+
+1. **Clone the repository:**
+```bash
+git clone https://github.com/ankziety/daydreamer.git
+cd daydreamer
+```
+
+2. **Install dependencies:**
+```bash
+pip install -r requirements.txt
+```
+
+## 🏃 Running the System
+
+**Run the Default Mode Network demonstration:**
+```bash
+python dmn_demo.py
+```
+
+**Run system tests:**
+```bash
+python test_dmn_system.py
+```
+
+**Quick start example:**
+```bash
+python quick_start.py
+```
 
 ## 🚀 Quick Start for Builders
 
