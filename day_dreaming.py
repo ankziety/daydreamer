@@ -133,7 +133,7 @@ class DaydreamingEngine:
     
     async def trigger_daydream_session(self, 
                                      context: str,
-                                     trigger_reason: str = "spontaneous",
+                                     trigger_reason: str = "contextual",
                                      progress_callback: Optional[Callable] = None) -> DaydreamSession:
         """
         Trigger a complete daydreaming session.
@@ -232,7 +232,7 @@ class DaydreamingEngine:
         random_memory = await self._get_random_memory()
         
         if self.verbose:
-            memory_preview = random_memory[:100] + "..." if random_memory and len(random_memory) > 100 else random_memory or "None"
+            memory_preview = random_memory[:250] + "..." if random_memory and len(random_memory) > 250 else random_memory or "None"
             print(f"   💭 RANDOM MEMORY: {memory_preview}")
         
         return DaydreamSeed(
@@ -434,8 +434,8 @@ class DaydreamingEngine:
                 from ollama_integration import ModelRequest
                 request = ModelRequest(
                     prompt=prompt,
-                    max_tokens=300,
-                    temperature=0.8  # Higher temperature for more creative daydreaming
+                    max_tokens=500,
+                    temperature=0.7  # Higher temperature for more creative daydreaming
                 )
                 response = await self.model_client.generate_response(request)
                 return response.content if hasattr(response, 'content') else str(response)
@@ -465,7 +465,7 @@ class DaydreamingEngine:
             summary_parts.extend([
                 f"Best Insight (creativity: {insight.creativity_score:.2f}, relevance: {insight.relevance_score:.2f}):",
                 f"  Domain: {insight.seed.knowledge_domain}",
-                f"  Insight: {insight.insight[:150]}..." if len(insight.insight) > 150 else f"  Insight: {insight.insight}"
+                f"  Insight: {insight.insight[:250]}..." if len(insight.insight) > 250 else f"  Insight: {insight.insight}"
             ])
             
             if insight.connections_made:

@@ -42,14 +42,14 @@ class DaydreamerAI:
         """
         self.verbose = model_config.get('verbose', False) if model_config else False
         
-        print("🧠 Initializing Daydreamer AI System...")
+        print("Initializing Daydreamer AI System...")
         if self.verbose:
-            print("   🔍 Verbose mode enabled - detailed processing will be shown")
-        print("=" * 60)
+            print("Verbose mode enabled - detailed processing will be shown")
+        print("-" * 60)
         
         # Generate session ID
         self.session_id = str(uuid.uuid4())[:8]
-        print(f"Session ID: {self.session_id}")
+        print(f"Session ID: {self.session_id} - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         
         # Initialize components
         self.memory_manager = PersistentMemoryManager(memory_db_path)
@@ -72,31 +72,31 @@ class DaydreamerAI:
         """Load user profile from memory"""
         profile = self.memory_manager.get_user_profile()
         if profile:
-            print(f"👤 User profile loaded (last updated: {profile.last_updated.strftime('%Y-%m-%d')})")
+            print(f"User profile loaded (last updated: {profile.last_updated.strftime('%Y-%m-%d')})")
             if profile.interests:
-                top_interests = sorted(profile.interests.items(), key=lambda x: x[1], reverse=True)[:3]
+                top_interests = sorted(profile.interests.items(), key=lambda x: x[1], reverse=True)[:10]
                 interests_str = ", ".join([f"{topic}({score:.1f})" for topic, score in top_interests])
                 print(f"   Top interests: {interests_str}")
         else:
-            print("👤 New user - will build profile through conversation")
+            print("New user - will build profile through conversation")
     
     def _show_initialization_summary(self):
         """Show initialization summary"""
         stats = self.memory_manager.get_memory_stats()
         model_info = self.model_manager.get_model_info()
         
-        print(f"\n📊 Memory Stats:")
+        print(f"\nMemory Stats:")
         print(f"   Conversations: {stats.get('total_conversations', 0)}")
         print(f"   Sessions: {stats.get('total_sessions', 0)}")
         print(f"   Insights: {stats.get('total_insights', 0)}")
         print(f"   Recent activity: {stats.get('recent_conversations', 0)} conversations (7 days)")
         
-        print(f"\n🤖 AI Model:")
+        print(f"\nAI Model:")
         print(f"   Active: {model_info.get('active_model', 'None')}")
         print(f"   Ollama available: {model_info.get('ollama_available', False)}")
         print(f"   Transformers available: {model_info.get('transformers_available', False)}")
         
-        print("\n✅ All systems initialized!")
+        print("\nAll systems initialized!")
         print("=" * 60)
     
     async def process_user_input(self, user_input: str) -> str:
@@ -117,15 +117,15 @@ class DaydreamerAI:
         
         # Get conversation context
         context = get_conversation_context(self.memory_manager, self.session_id)
-        print(f"📖 Retrieved context: {len(context)} characters")
+        print(f"Retrieved context: {len(context)} characters")
         
         if self.verbose and context:
-            print(f"   📄 CONTEXT PREVIEW: {context[:200]}..." if len(context) > 200 else f"   📄 CONTEXT: {context}")
+            print(f"Context Preview: {context[:200]}..." if len(context) > 200 else f"Context: {context}")
         
         # Step 1: Chain of Thought Analysis
-        print(f"\n🧠 Starting Chain of Thought analysis...")
+        print(f"\nThinking about my response...")
         if self.verbose:
-            print(f"   ⚙️  Configuration: max_steps={self.cot_processor.max_thinking_steps}, confidence_threshold={self.cot_processor.confidence_threshold}")
+            print(f"Configuration: max_steps={self.cot_processor.max_thinking_steps}, confidence_threshold={self.cot_processor.confidence_threshold}")
         
         cot_result = await self.cot_processor.process_chain_of_thought(
             user_input, 
@@ -134,10 +134,10 @@ class DaydreamerAI:
         )
         
         self.total_thinking_time += cot_result.total_thinking_time
-        print(f"✅ Chain of Thought complete: {len(cot_result.thinking_steps)} steps, {cot_result.total_thinking_time:.1f}s")
+        print(f"Chain of Thought complete: {len(cot_result.thinking_steps)} steps, {cot_result.total_thinking_time:.1f}s")
         
         if self.verbose:
-            print(f"   📋 COT SUMMARY:")
+            print(f"COT Summary:")
             for i, step in enumerate(cot_result.thinking_steps, 1):
                 print(f"      Step {i}: {step.focus} (confidence: {step.confidence:.2f})")
         
@@ -147,14 +147,14 @@ class DaydreamerAI:
         
         should_daydream = await self.daydream_engine.should_daydream(full_context)
         if self.verbose:
-            print(f"\n🌙 Daydream Decision: {'YES' if should_daydream else 'NO'}")
-            print(f"   🎲 Base frequency: {self.daydream_engine.daydream_frequency}")
-            creative_words = ['creative', 'imagination', 'idea', 'inspiration', 'novel']
+            print(f"\nDaydream Decision: {'YES' if should_daydream else 'NO'}")
+            print(f"Base frequency: {self.daydream_engine.daydream_frequency}")
+            creative_words = ['creative', 'imagination', 'idea', 'inspiration', 'novel', 'curious', 'wonder', 'think', 'feel', 'believe']
             has_creative = any(word in user_input.lower() for word in creative_words)
-            print(f"   🎨 Creative context detected: {has_creative}")
+            print(f"Creative context detected: {has_creative}")
         
         if should_daydream:
-            print(f"\n🌙 Triggering Day Dreaming session...")
+            print(f"\nTriggering Day Dreaming session...")
             daydream_result = await self.daydream_engine.trigger_daydream_session(
                 full_context,
                 "contextual_trigger",
@@ -164,33 +164,33 @@ class DaydreamerAI:
             print(f"✅ Day Dreaming complete: {len(daydream_result.insights)} insights, {daydream_result.total_time:.1f}s")
             
             if self.verbose and daydream_result.insights:
-                print(f"   🌟 INSIGHTS GENERATED:")
+                print(f"Insights Generated:")
                 for i, insight in enumerate(daydream_result.insights, 1):
                     total_score = insight.creativity_score + insight.relevance_score
                     print(f"      {i}. {insight.seed.knowledge_domain}: {total_score:.2f} (C:{insight.creativity_score:.2f} R:{insight.relevance_score:.2f})")
         
         # Step 3: Retrieve relevant memories
-        print(f"\n💭 Retrieving relevant memories...")
-        relevant_memories = self.memory_manager.get_relevant_memories(user_input, limit=3)
+        print(f"\nRetrieving relevant memories...")
+        relevant_memories = self.memory_manager.get_relevant_memories(user_input, limit=5)
         memory_context = ""
         if relevant_memories:
             memory_parts = []
             for memory in relevant_memories:
-                memory_parts.append(f"- {memory.user_input[:100]}...")
+                memory_parts.append(f"- {memory.user_input[:200]}...")
             memory_context = "\n".join(memory_parts)
             print(f"   Found {len(relevant_memories)} relevant memories")
             
             if self.verbose:
-                print(f"   💾 MEMORY MATCHES:")
+                print(f"Memory Matches:")
                 for i, memory in enumerate(relevant_memories, 1):
                     print(f"      {i}. {memory.timestamp.strftime('%Y-%m-%d')}: {memory.user_input[:80]}...")
         else:
             print("   No relevant memories found")
         
         # Step 4: Generate final response
-        print(f"\n🎯 Generating final response...")
+        print(f"\nGenerating final response...")
         if self.verbose:
-            print(f"   🧩 RESPONSE COMPONENTS:")
+            print(f"Response Components:")
             print(f"      CoT conclusions: {len(cot_result.final_conclusions)} chars")
             if daydream_result and daydream_result.best_insight:
                 print(f"      Best insight: {daydream_result.best_insight.seed.knowledge_domain}")
@@ -205,9 +205,9 @@ class DaydreamerAI:
         tags = self._extract_tags(user_input, response)
         
         if self.verbose:
-            print(f"\n💾 MEMORY STORAGE:")
-            print(f"   📊 Importance score: {importance:.2f}")
-            print(f"   🏷️  Tags: {', '.join(tags)}")
+            print(f"\nMemory Storage:")
+            print(f"Importance score: {importance:.2f}")
+            print(f"Tags: {', '.join(tags)}")
         
         cot_summary = cot_result.final_conclusions if cot_result else None
         daydream_summary = daydream_result.best_insight.insight if daydream_result and daydream_result.best_insight else None
@@ -251,11 +251,11 @@ class DaydreamerAI:
         total_time = time.time() - start_time
         self.conversation_count += 1
         
-        print(f"\n📊 Processing complete: {total_time:.1f}s total")
+        print(f"\nProcessing complete: {total_time:.1f}s total")
         print(f"   Memory stored: {memory_id}")
         print(f"   Importance: {importance:.2f}")
         if self.verbose:
-            print(f"   🔍 Verbose mode enabled - detailed logs shown above")
+            print(f"Verbose mode enabled - detailed logs shown above")
         print(f"=" * 50)
         
         return response
@@ -289,8 +289,8 @@ class DaydreamerAI:
         request = ModelRequest(
             prompt=prompt,
             system_prompt=self.prompts.SYSTEM_IDENTITY,
-            temperature=0.8,  # Higher temperature for more creative responses
-            max_tokens=400
+            temperature=0.7,  # Higher temperature for more creative responses
+            max_tokens=500
         )
         
         response = await self.model_manager.generate_response(request)
@@ -312,7 +312,7 @@ class DaydreamerAI:
         # Increase for longer, more substantive inputs
         if len(user_input) > 50:
             importance += 0.1
-        if len(user_input) > 200:
+        if len(user_input) > 150:
             importance += 0.1
         
         # Increase for questions
@@ -352,7 +352,8 @@ class DaydreamerAI:
             'science': ['science', 'research', 'discovery', 'experiment'],
             'technology': ['technology', 'computer', 'programming', 'code'],
             'learning': ['learn', 'study', 'understand', 'knowledge'],
-            'emotion': ['feel', 'emotion', 'happy', 'sad', 'love', 'fear']
+            'emotion': ['feel', 'emotion', 'happy', 'sad', 'love', 'fear'],
+            'daydreaming': ['daydream', 'dream', 'imagine', 'fantasy', 'vision']
         }
         
         for topic, keywords in topic_keywords.items():
@@ -395,7 +396,7 @@ class DaydreamerAI:
     async def start_interactive_chat(self):
         """Start interactive chat session"""
         print("\n" + "=" * 70)
-        print("🧠 DAYDREAMER AI - INTERACTIVE CHAT")
+        print("DAYDREAMER AI - INTERACTIVE CHAT")
         print("=" * 70)
         print("Welcome to Daydreamer AI! I use advanced Chain of Thought reasoning")
         print("and creative Day Dreaming to provide thoughtful, insightful responses.")
@@ -406,9 +407,9 @@ class DaydreamerAI:
         print("=" * 70)
         
         # Show memory context if available
-        recent_memories = self.memory_manager.get_recent_conversations(limit=3)
+        recent_memories = self.memory_manager.get_recent_conversations(limit=5)
         if recent_memories:
-            print(f"\n💭 I remember our recent conversations...")
+            print(f"\nI remember our recent conversations...")
             print(f"   Last chat: {recent_memories[0].timestamp.strftime('%Y-%m-%d %H:%M')}")
         
         self.is_running = True
@@ -417,7 +418,7 @@ class DaydreamerAI:
             while self.is_running:
                 try:
                     # Get user input
-                    user_input = input("\n👤 You: ").strip()
+                    user_input = input("\nYou: ").strip()
                     
                     # Handle special commands
                     if user_input.lower() in ['quit', 'exit', 'bye', 'goodbye']:
@@ -434,16 +435,16 @@ class DaydreamerAI:
                         continue
                     
                     # Process input and generate response
-                    print("🤔 Processing your message...")
+                    print("Processing your message...")
                     response = await self.process_user_input(user_input)
                     
-                    print(f"\n🤖 Daydreamer AI: {response}")
+                    print(f"\ndaydreamer: {response}")
                     
                 except KeyboardInterrupt:
-                    print("\n\n👋 Chat interrupted by user")
+                    print("\n\nChat interrupted by user")
                     break
                 except Exception as e:
-                    print(f"\n❌ Error processing message: {e}")
+                    print(f"\nError processing message: {e}")
                     print("Let's continue our conversation...")
         
         finally:
@@ -451,7 +452,7 @@ class DaydreamerAI:
     
     async def _handle_goodbye(self):
         """Handle user saying goodbye"""
-        print("\n🤖 Daydreamer AI: Thank you for our conversation! I'll remember everything we discussed.")
+        print("\ndaydreamer: Thank you for our conversation! I'll remember everything we discussed.")
         print("My memories will help me understand you better next time we chat.")
         
         # Create session summary
@@ -467,13 +468,13 @@ class DaydreamerAI:
                 
                 summary = f"Session with {self.conversation_count} exchanges. Topics: {', '.join(list(topics)[:5])}"
                 self.memory_manager.create_session_summary(self.session_id, summary)
-                print(f"💾 Session summary saved: {summary}")
+                print(f"Session summary saved: {summary}")
     
     def _show_conversation_stats(self):
         """Show conversation statistics"""
         stats = self.memory_manager.get_memory_stats()
         
-        print(f"\n📊 CONVERSATION STATISTICS")
+        print(f"\nConversation Statistics")
         print(f"   Current session exchanges: {self.conversation_count}")
         print(f"   Total thinking time: {self.total_thinking_time:.1f}s")
         print(f"   Total daydream time: {self.total_daydream_time:.1f}s")
@@ -484,14 +485,14 @@ class DaydreamerAI:
         # Show recent insights
         recent_insights = self.memory_manager.get_insights(limit=3)
         if recent_insights:
-            print(f"\n🌟 Recent insights:")
+            print(f"\nRecent insights:")
             for insight in recent_insights:
                 score = insight.creativity_score + insight.relevance_score
                 print(f"   {insight.insight_type}: {insight.insight_content[:80]}... (score: {score:.2f})")
     
     def _show_help(self):
         """Show help information"""
-        print(f"\n❓ DAYDREAMER AI HELP")
+        print(f"\nDaydreamer Help")
         print(f"   Commands:")
         print(f"   • 'stats' - Show conversation statistics")
         print(f"   • 'help' - Show this help message")
@@ -505,33 +506,33 @@ class DaydreamerAI:
     
     async def _shutdown(self):
         """Gracefully shutdown the system"""
-        print("\n🔄 Shutting down Daydreamer AI...")
+        print("\nShutting down Daydreamer AI...")
         
         # Clean up old memories periodically
         if self.conversation_count > 10:
             self.memory_manager.cleanup_old_memories()
-            print("🧹 Cleaned up old memories")
+            print("Cleaned up old memories")
         
         # Close memory manager
         self.memory_manager.close()
-        print("💾 Memory saved and closed")
+        print("Memory saved and closed")
         
-        print("✅ Shutdown complete!")
+        print("Shutdown complete!")
 
 
 # Main function for running the chat interface
 async def main():
     """Main function to run Daydreamer AI"""
-    print("🚀 Starting Daydreamer AI System...")
+    print("Starting Daydreamer AI System...")
     
     try:
         # Create and start the AI system
         ai = DaydreamerAI()
         await ai.start_interactive_chat()
     except KeyboardInterrupt:
-        print("\n👋 Goodbye!")
+        print("\nGoodbye!")
     except Exception as e:
-        print(f"\n💥 Unexpected error: {e}")
+        print(f"\nUnexpected error: {e}")
         import traceback
         traceback.print_exc()
 

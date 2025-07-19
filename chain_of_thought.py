@@ -56,11 +56,11 @@ class ChainOfThoughtProcessor:
     
     def __init__(self, 
                  model_client: Any,
-                 max_thinking_steps: int = 10,
-                 max_context_tokens: int = 2000,
+                 max_thinking_steps: int = 50,
+                 max_context_tokens: int = 5000,
                  confidence_threshold: float = 0.8,
-                 thinking_timeout: float = 30.0,
-                 verbose: bool = False):
+                 thinking_timeout: float = 120.0,
+                 verbose: bool = True):
         """
         Initialize chain of thought processor.
         
@@ -148,7 +148,7 @@ class ChainOfThoughtProcessor:
         
         # Generate final conclusions
         if progress_callback:
-            progress_callback("Generating final conclusions...")
+            progress_callback("Generating Final Conclusions...")
             
         final_conclusions = await self._generate_conclusions(thinking_steps)
         
@@ -165,7 +165,7 @@ class ChainOfThoughtProcessor:
         )
         
         if progress_callback:
-            progress_callback(f"Chain of thought complete ({len(thinking_steps)} steps, {total_time:.1f}s)")
+            progress_callback(f"Chain of Thought Complete ({len(thinking_steps)} steps, {total_time:.1f}s)")
         
         return result
     
@@ -176,20 +176,20 @@ class ChainOfThoughtProcessor:
                                            context=context)
         
         if self.verbose:
-            print(f"   📝 INITIAL ANALYSIS PROMPT:")
-            print(f"      {prompt[:200]}..." if len(prompt) > 200 else f"      {prompt}")
+            print(f"Initial Analysis Prompt:")
+            print(f"{prompt[:200]}..." if len(prompt) > 200 else f"{prompt}")
         
         response = await self._query_model(prompt)
         
         if self.verbose:
-            print(f"   🤖 MODEL RESPONSE:")
-            print(f"      {response[:300]}..." if len(response) > 300 else f"      {response}")
+            print(f"Model Response:")
+            print(f"{response[:300]}..." if len(response) > 300 else f"{response}")
         
         confidence = self._extract_confidence(response)
         ready_to_respond = self._check_ready_to_respond(response)
         
         if self.verbose:
-            print(f"   📊 ANALYSIS: confidence={confidence:.2f}, ready={ready_to_respond}")
+            print(f"Analysis: confidence={confidence:.2f}, ready={ready_to_respond}")
         
         return ThinkingStep(
             step_number=1,
@@ -212,22 +212,22 @@ class ChainOfThoughtProcessor:
         current_focus = current_step.specific_focus or "deeper analysis"
         
         if self.verbose:
-            print(f"   🎯 ATTENTION FOCUS: {current_focus}")
-            print(f"   🧠 CONTEXT: {len(previous_thoughts)} chars from {len(thinking_steps)} previous steps")
+            print(f"Attention Focus: {current_focus}")
+            print(f"Context: {len(previous_thoughts)} chars from {len(thinking_steps)} previous steps")
         
         prompt = self.prompts.format_prompt("cot_continuation",
                                           previous_thoughts=previous_thoughts,
                                           current_focus=current_focus)
         
         if self.verbose:
-            print(f"   📝 CONTINUATION PROMPT:")
-            print(f"      {prompt[:200]}..." if len(prompt) > 200 else f"      {prompt}")
+            print(f"Continuation Prompt:")
+            print(f"{prompt[:200]}..." if len(prompt) > 200 else f"{prompt}")
         
         response = await self._query_model(prompt)
         
         if self.verbose:
-            print(f"   🤖 MODEL RESPONSE:")
-            print(f"      {response[:300]}..." if len(response) > 300 else f"      {response}")
+            print(f"Model Response:")
+            print(f"{response[:300]}..." if len(response) > 300 else f"{response}")
         
         confidence = self._extract_confidence(response)
         ready_to_respond = self._check_ready_to_respond(response)
@@ -259,24 +259,24 @@ class ChainOfThoughtProcessor:
         if self.verbose:
             total_chars = len(accumulated_thoughts)
             estimated_tokens = total_chars // 4
-            print(f"   ✂️  TRUNCATION TRIGGERED:")
-            print(f"      Current context: {total_chars} chars (~{estimated_tokens} tokens)")
-            print(f"      Limit: {self.max_context_tokens} tokens")
-            print(f"      Summarizing {len(thinking_steps)} thinking steps...")
+            print(f"Truncation Triggered:")
+            print(f"Current context: {total_chars} chars (~{estimated_tokens} tokens)")
+            print(f"Limit: {self.max_context_tokens} tokens")
+            print(f"Summarizing {len(thinking_steps)} thinking steps...")
         
         prompt = self.prompts.format_prompt("cot_summarization",
                                           accumulated_thoughts=accumulated_thoughts)
         
         if self.verbose:
-            print(f"   📝 SUMMARIZATION PROMPT:")
-            print(f"      {prompt[:200]}..." if len(prompt) > 200 else f"      {prompt}")
+            print(f"Summarization Prompt:")
+            print(f"{prompt[:200]}..." if len(prompt) > 200 else f"{prompt}")
         
         summary = await self._query_model(prompt)
         
         if self.verbose:
-            print(f"   📋 SUMMARY RESULT:")
-            print(f"      {summary[:200]}..." if len(summary) > 200 else f"      {summary}")
-            print(f"   📉 Context reduced from {len(accumulated_thoughts)} to {len(summary)} chars")
+            print(f"Summary Result:")
+            print(f"{summary[:200]}..." if len(summary) > 200 else f"{summary}")
+            print(f"Context reduced from {len(accumulated_thoughts)} to {len(summary)} chars")
         
         return summary
     
@@ -286,7 +286,7 @@ class ChainOfThoughtProcessor:
             return "No thinking steps available for conclusions."
         
         # Use the last few steps for conclusions, or summary if available
-        recent_steps = thinking_steps[-3:] if len(thinking_steps) > 3 else thinking_steps
+        recent_steps = thinking_steps[-5:] if len(thinking_steps) > 5 else thinking_steps
         
         conclusions_parts = []
         for step in recent_steps:
@@ -306,7 +306,7 @@ class ChainOfThoughtProcessor:
         """Check if context should be summarized due to length"""
         # Rough token estimation: ~4 characters per token
         total_chars = sum(len(step.thoughts) for step in thinking_steps)
-        estimated_tokens = total_chars // 4
+        estimated_tokens = total_chars // 3
         
         return estimated_tokens > self.max_context_tokens
     
@@ -314,7 +314,7 @@ class ChainOfThoughtProcessor:
         """Build context string from previous thinking steps"""
         context_parts = []
         
-        for step in thinking_steps[-3:]:  # Use last 3 steps for context
+        for step in thinking_steps[-5:]:  # Use last 5 steps for context
             context_parts.append(f"Step {step.step_number} ({step.focus}): {step.thoughts[:200]}...")
         
         return "\n\n".join(context_parts)
@@ -392,9 +392,11 @@ class ChainOfThoughtProcessor:
                 # ModelManager or Ollama-style client - needs ModelRequest object
                 from ollama_integration import ModelRequest
                 request = ModelRequest(
+                    system_prompt=self.prompts.format_prompt("cot_system_prompt"),
                     prompt=prompt,
-                    max_tokens=300,
-                    temperature=0.7
+                    max_tokens=500,
+                    temperature=0.6,
+                    top_p=0.5,
                 )
                 response = await self.model_client.generate_response(request)
                 return response.content if hasattr(response, 'content') else str(response)
