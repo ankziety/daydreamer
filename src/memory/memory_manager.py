@@ -63,7 +63,7 @@ class PersistentMemoryManager:
     across sessions to provide continuity and context.
     """
     
-    def __init__(self, db_path: str = "daydreamer_memory.db"):
+    def __init__(self, db_path: str = "src/memory/daydreamer_memory.db"):
         """
         Initialize persistent memory manager.
         
