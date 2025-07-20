@@ -31,7 +31,7 @@ class DaydreamerAI:
     """
     
     def __init__(self, 
-                 memory_db_path: str = "daydreamer_memory.db",
+                 memory_db_path: str = "src/memory/daydreamer_memory.db",
                  model_config: Optional[Dict[str, Any]] = None):
         """
         Initialize the Daydreamer AI system.
