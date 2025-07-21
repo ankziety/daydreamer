@@ -29,7 +29,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from src.core.daydreamer_ai import DaydreamerAI
 from src.memory.memory_manager import PersistentMemoryManager
-from src.ai_engines.ollama_integration import ModelManager, create_model_manager
+from src.integration.ollama_integration import ModelManager, create_model_manager
 
 # Initialize FastAPI app
 app = FastAPI(
