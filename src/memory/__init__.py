@@ -1,21 +1,19 @@
 """
-Memory System Module
+Memory Module - Daydreamer AI
+=============================
 
-This module provides comprehensive memory storage and management capabilities
-for the Daydreamer AI system, including hierarchical memory structures,
-persistence, indexing, and retrieval mechanisms.
+Persistent memory management for the Daydreamer AI system.
 """
 
-from .memory_store import MemoryStore
-from .memory_entry import MemoryEntry, MemoryType, MemoryMetadata
-from .memory_index import MemoryIndex
-from .memory_persistence import MemoryPersistence
+# Import statements removed to avoid circular imports
+# Components can be imported directly from their modules
 
 __all__ = [
-    'MemoryStore',
-    'MemoryEntry', 
-    'MemoryType',
-    'MemoryMetadata',
-    'MemoryIndex',
-    'MemoryPersistence'
+    'PersistentMemoryManager',
+    'ConversationMemory', 
+    'InsightMemory', 
+    'UserProfile',
+    'get_conversation_context',
+    'analyze_user_interests',
+    'create_memory_manager'
 ]

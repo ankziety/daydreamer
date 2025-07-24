@@ -1,8 +1,9 @@
 """
-Daydreamer Project
-Default mode network AI simulation using Gemma 3N and Ollama
+Daydreamer AI - Source Package
+==============================
+
+This package contains all the source code for the Daydreamer AI system.
 """
 
-__version__ = "0.1.0"
-__author__ = "Daydreamer Team"
-__description__ = "Default mode network AI simulation using Gemma 3N and Ollama"
+__version__ = "1.0.0"
+__author__ = "Daydreamer AI Team"
